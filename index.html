@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vidriera — Ventaniya 6</title>
+    <title>Posta 1001 — Vidriera Clandestina Mardelwood (MDW)</title>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
     <style>
         body {
@@ -18,6 +18,14 @@
             border-bottom: 2px dashed #00ffff;
             padding-bottom: 15px;
             margin-bottom: 30px;
+        }
+        header .tag {
+            font-size: 0.75rem;
+            letter-spacing: 2px;
+            color: #00ffff;
+            text-transform: uppercase;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0,255,255,0.5);
         }
         header h1 {
             font-family: 'Special Elite', cursive;
@@ -80,158 +88,155 @@
             width: 100%;
             border-radius: 4px;
             box-shadow: 0 0 10px rgba(0,255,255,0.3);
-            transition: background 0.2s;
+            transition: all 0.3s ease;
         }
         .btn-descarga-mdw:hover {
             background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0,255,255,0.8);
         }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>VENTANIYA 6</h1>
-        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Vidriera oficial en la nube — Línea de tiempo atómica.</p>
+        <div class="tag">POSTA DEL MILISEGUNDO — MDW 1001</div>
+        <h1>VIDRIERA DE ESTAMPIYA! DE TIEMPO</h1>
+        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Explorá el archivo visual y descargá cada pieza con certificación atómica en vivo.</p>
     </header>
 
     <main id="vidriera-container" class="vidriera-grid">
-        <!-- Renderizado dinámico desde la nube -->
+        <div style="grid-column: 1 / -1; text-align: center; color: #00ffff; padding: 40px;">
+            Buscando piezas en la carpeta de GitHub...
+        </div>
     </main>
 
     <canvas id="canvas-sello" style="display:none;"></canvas>
 
     <script>
-        // Generador robusto de hash alfanumérico
-        function generarHashReal() {
-            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            let resultado = "v6-";
-            for (let i = 0; i < 5; i++) {
-                resultado += chars.charAt(Math.floor(Math.random() * chars.length));
-            }
-            return resultado;
+        // Detecta automáticamente el usuario y repositorio desde la URL actual de GitHub Pages
+        const pathArray = window.location.pathname.split('/');
+        const userOrOrg = window.location.hostname.split('.')[0]; 
+        // Si estás en github.io, el repo suele ser el primer segmento del path o se extrae dinámicamente:
+        const repoName = window.location.hostname.includes('github.io') ? pathArray[1] : '';
+        
+        // Función para limpiar el nombre del archivo y que quede lindo como título
+        function formatearTitulo(nombreArchivo) {
+            let sinExtension = nombreArchivo.substring(0, nombreArchivo.lastIndexOf('.')) || nombreArchivo;
+            let limpio = sinExtension.replace(/[-_]/g, ' ');
+            return limpio.charAt(0).toUpperCase() + limpio.slice(1);
         }
 
-        // ACÁ AGREGÁS O SACÁS TUS PIEZAS DIRECTAMENTE EN EL CÓDIGO
-        const piezasEnLaNube = [
-            { id: generarHashReal(), titulo: "aldea1", archivo: "aldea1.png", posta: "1002" },
-            { id: generarHashReal(), titulo: "estacion", archivo: "estacion.png", posta: "1002" },
-            { id: generarHashReal(), titulo: "querandi", archivo: "querandi.png", posta: "1002" }
-            // Para sumar la cuarta, simplemente agregás una línea más acá:
-            // { id: generarHashReal(), titulo: "nombre_nueva", archivo: "nombre_nueva.png", posta: "1002" },
-        ];
-
-        function cargarVidriera() {
+        async function cargarVidrieraAutomatica() {
             const contenedor = document.getElementById('vidriera-container');
-            contenedor.innerHTML = "";
-
-            piezasEnLaNube.forEach(item => {
-                const tarjeta = document.createElement('div');
-                tarjeta.className = 'tarjeta-estampiya';
-                
-                tarjeta.innerHTML = `
-                    <div>
-                        <div class="estampiya-frame">
-                            <img src="${item.archivo}" alt="${item.titulo}" crossorigin="anonymous">
-                        </div>
-                        <div class="info-estampa">
-                            <h3>${item.titulo}</h3>
-                            <div><strong>Posta:</strong> ${item.posta}</div>
-                            <div><strong>ID Hash:</strong> ${item.id}</div>
-                        </div>
-                    </div>
-                    <button class="btn-descarga-mdw">📥 DESCARGAR CON SELLO ATÓMICO</button>
-                `;
-
-                const btnDescarga = tarjeta.querySelector('.btn-descarga-mdw');
-                btnDescarga.addEventListener('click', () => {
-                    descargarConSelloAtomicoCompleto(item.archivo, item.titulo, item.posta, item.id);
-                });
-
-                contenedor.appendChild(tarjeta);
-            });
-        }
-
-        function descargarConSelloAtomicoCompleto(urlImagen, titulo, posta, hashMatematico) {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.src = urlImagen;
-
-            img.onload = () => {
-                const canvas = document.getElementById('canvas-sello');
-                const ctx = canvas.getContext('2d');
-
-                canvas.width = img.naturalWidth;
-                canvas.height = img.naturalHeight;
-
-                ctx.drawImage(img, 0, 0);
-
-                const ahora = new Date();
-                const horas = String(ahora.getHours()).padStart(2, '0');
-                const minutos = String(ahora.getMinutes()).padStart(2, '0');
-                const segundos = String(ahora.getSeconds()).padStart(2, '0');
-                const milisegundos = String(ahora.getMilliseconds()).padStart(3, '0');
-                const tiempoAtomico = `${horas}:${minutos}:${segundos}.${milisegundos}`;
-
-                const radioSello = Math.max(85, Math.floor(canvas.width * 0.14));
-                const centroX = canvas.width - radioSello - 45;
-                const centroY = canvas.height - radioSello - 45;
-
-                ctx.save();
-                ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-                ctx.shadowBlur = 8;
-                ctx.shadowOffsetX = 2;
-                ctx.shadowOffsetY = 2;
-
-                ctx.beginPath();
-                ctx.arc(centroX, centroY, radioSello, 0, Math.PI * 2);
-                ctx.lineWidth = Math.max(3.5, radioSello * 0.07);
-                ctx.strokeStyle = "rgba(0, 255, 255, 0.85)";
-                ctx.stroke();
-
-                ctx.beginPath();
-                ctx.arc(centroX, centroY, radioSello - 7, 0, Math.PI * 2);
-                ctx.lineWidth = 1.2;
-                ctx.strokeStyle = "rgba(0, 139, 139, 0.85)";
-                ctx.stroke();
-                ctx.restore();
-
-                function dibujarTextosello(texto, posX, posY, fontSize, colorTexto, esNegrita = false) {
-                    ctx.save();
-                    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
-                    ctx.shadowBlur = 6;
-                    ctx.lineWidth = 3;
-                    ctx.strokeStyle = "rgba(0, 0, 0, 0.9)";
-                    
-                    ctx.font = `${esNegrita ? 'bold' : ''} ${fontSize}px 'Courier New', monospace`;
-                    ctx.textAlign = "center";
-                    ctx.textBaseline = "middle";
-
-                    ctx.strokeText(texto, posX, posY);
-                    ctx.fillStyle = colorTexto;
-                    ctx.fillText(texto, posX, posY);
-                    ctx.restore();
+            
+            try {
+                // Consultamos la API pública de GitHub para listar los archivos del repositorio
+                let apiUrl = `https://api.github.com/repos/misterkong69-del/misterkong69-del.github.io/contents/`;
+                if (window.location.hostname.includes('github.io') && repoName && repoName !== '') {
+                    apiUrl = `https://api.github.com/repos/${userOrOrg}/${repoName}/contents/`;
                 }
 
-                const fontGrande = Math.max(11, Math.floor(radioSello * 0.21));
-                const fontChico = Math.max(9, Math.floor(radioSello * 0.16));
+                const respuesta = await fetch(apiUrl);
+                if (!respuesta.ok) throw new Error("No se pudo conectar con el repositorio.");
+                
+                const archivos = await respuesta.json();
+                
+                // Filtramos solo los archivos que sean imágenes (jpg, jpeg, png, webp)
+                const imagenes = archivos.filter(item => {
+                    if (item.type !== 'file') return false;
+                    const ext = item.name.split('.').pop().toLowerCase();
+                    return ['png', 'jpg', 'jpeg', 'webp'].includes(ext);
+                });
 
-                dibujarTextosello("VENTANIYA", centroX, centroY - radioSello * 0.42, fontGrande, "#ffffff", true);
-                dibujarTextosello(`POSTA ${posta}`, centroX, centroY - radioSello * 0.15, Math.floor(fontGrande * 1.1), "#00ffff", true);
-                dibujarTextosello(tiempoAtomico, centroX, centroY + radioSello * 0.10, fontChico, "#d8f8ff", true);
-                dibujarTextosello(`ID: ${hashMatematico}`, centroX, centroY + radioSello * 0.38, fontChico, "#a5f3fc", true);
+                if (imagenes.length === 0) {
+                    contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #ff5555; padding: 40px;">⚠️ No se encontraron imágenes en el repositorio.</div>';
+                    return;
+                }
 
-                const enlaceFinal = document.createElement('a');
-                enlaceFinal.download = `${titulo.toLowerCase().replace(/\s+/g, '_')}_ventaniya1002.jpg`;
-                enlaceFinal.href = canvas.toDataURL('image/jpeg', 0.95);
-                enlaceFinal.click();
-            };
+                contenedor.innerHTML = "";
 
-            img.onerror = () => {
-                alert("No se pudo cargar la imagen para estampar.");
-            };
+                imagenes.forEach((imgData, index) => {
+                    const tituloLindo = formatearTitulo(imgData.name);
+                    const hashAleatorio = "MDW-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-2026";
+                    
+                    const tarjeta = document.createElement('div');
+                    tarjeta.className = 'tarjeta-estampiya';
+                    
+                    tarjeta.innerHTML = `
+                        <div>
+                            <div class="estampiya-frame">
+                                <img src="${imgData.name}" alt="${tituloLindo}" crossorigin="anonymous" class="img-estampa-ref">
+                            </div>
+                            <div class="info-estampa">
+                                <h3>${tituloLindo}</h3>
+                                <div><strong>Posta:</strong> 1001 (MDW)</div>
+                                <div><strong>Hash Base:</strong> ${hashAleatorio}</div>
+                            </div>
+                        </div>
+                        <button class="btn-descarga-mdw" onclick="descargarEstampiyaDeVidriera(this)">
+                            📥 VER Y DESCARGAR CON MS
+                        </button>
+                    `;
+                    contenedor.appendChild(tarjeta);
+                });
+
+            } catch (error) {
+                console.error(error);
+                contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #ff5555; padding: 40px;">⚠️ Error al cargar las imágenes automáticamente. Verificá la conexión.</div>';
+            }
         }
 
-        window.onload = cargarVidriera;
+        function descargarEstampiyaDeVidriera(btn) {
+            const tarjeta = btn.closest('.tarjeta-estampiya');
+            const img = tarjeta.querySelector('.img-estampa-ref');
+            const canvas = document.getElementById('canvas-sello');
+            const ctx = canvas.getContext('2d');
+
+            canvas.width = img.naturalWidth || 1200;
+            canvas.height = img.naturalHeight || 800;
+
+            try {
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            } catch (e) {
+                alert("Error de seguridad al procesar la imagen.");
+                return;
+            }
+
+            const ahora = new Date();
+            const fStr = ahora.toLocaleDateString('es-AR');
+            const hStr = String(ahora.getHours()).padStart(2, '0');
+            const mStr = String(ahora.getMinutes()).padStart(2, '0');
+            const sStr = String(ahora.getSeconds()).padStart(2, '0');
+            const msStr = String(ahora.getMilliseconds()).padStart(3, '0');
+            const timestampCompleto = `${fStr} ${hStr}:${mStr}:${sStr}.${msStr}`;
+            const hashSello = "MDW-" + Math.random().toString(36).substring(2, 10).toUpperCase() + "-1001";
+
+            ctx.fillStyle = "#00ffff"; 
+            ctx.font = "bold 32px 'Courier New', monospace";
+            
+            ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+            ctx.shadowOffsetX = 6;
+            ctx.shadowOffsetY = 6;
+            ctx.shadowBlur = 12;
+
+            const posX = canvas.width - 780;
+            const posY = canvas.height - 240;
+
+            ctx.fillText(`FECHA: ${timestampCompleto}`, posX, posY);
+            ctx.fillText(`HASH-Q: ${hashSello}`, posX, posY + 52);
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "bold 26px 'Courier New', monospace";
+            ctx.fillText("ESTAMPIYA! DE TIEMPO — POSTA 1001", posX, posY + 110);
+
+            const enlace = document.createElement('a');
+            enlace.download = `ESTAMPIYA_TIEMPO_${ahora.getTime()}.jpg`;
+            enlace.href = canvas.toDataURL('image/jpeg', 0.98);
+            enlace.click();
+        }
+
+        window.onload = cargarVidrieraAutomatica;
     </script>
+
 </body>
 </html>

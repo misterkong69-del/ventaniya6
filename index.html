@@ -101,7 +101,6 @@
     <canvas id="canvas-sello" style="display:none;"></canvas>
 
     <script>
-        // Piezas predeterminadas basadas en los archivos de tu repositorio
         const piezasDefault = [
             { id: "hash_aldea1_1122", titulo: "aldea1", archivo: "aldea1.png", posta: "1002" },
             { id: "hash_estacion_3344", titulo: "estacion", archivo: "estacion.png", posta: "1002" },
@@ -162,72 +161,75 @@
                 canvas.width = img.naturalWidth;
                 canvas.height = img.naturalHeight;
 
-                // 1. Dibujar imagen original
+                // 1. Dibujar imagen original intacta
                 ctx.drawImage(img, 0, 0);
 
-                // Obtener hora actual para el sello
                 const ahora = new Date();
                 const horas = String(ahora.getHours()).padStart(2, '0');
                 const minutos = String(ahora.getMinutes()).padStart(2, '0');
                 const segundos = String(ahora.getSeconds()).padStart(2, '0');
                 const tiempoStr = `${horas}:${minutos}:${segundos}`;
 
-                // 2. Configurar dimensiones proporcionales del sello redondo (abajo a la derecha)
-                const radioSello = Math.max(70, Math.floor(canvas.width * 0.13));
-                const centroX = canvas.width - radioSello - 40;
-                const centroY = canvas.height - radioSello - 40;
+                // 2. Coordenadas y tamaño del sello redondo (abajo a la derecha)
+                const radioSello = Math.max(75, Math.floor(canvas.width * 0.13));
+                const centroX = canvas.width - radioSello - 45;
+                const centroY = canvas.height - radioSello - 45;
 
                 ctx.save();
 
-                // Sombra general del sello para darle relieve físico
-                ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
-                ctx.shadowBlur = 12;
-                ctx.shadowOffsetX = 4;
-                ctx.shadowOffsetY = 4;
+                // Sombra de los trazos del sello para que resalten sobre cualquier fondo
+                ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+                ctx.shadowBlur = 8;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
 
-                // Círculo exterior principal (cian brillante estilo neón/archivo)
+                // Círculo exterior principal (Cian transparente / translúcido, SIN fondo negro)
                 ctx.beginPath();
                 ctx.arc(centroX, centroY, radioSello, 0, Math.PI * 2);
-                ctx.lineWidth = Math.max(4, radioSello * 0.08);
-                ctx.strokeStyle = "#00ffff";
-                ctx.fillStyle = "rgba(11, 19, 26, 0.82)"; // Fondo semitransparente oscuro para que resalte
-                ctx.fill();
+                ctx.lineWidth = Math.max(3.5, radioSello * 0.07);
+                ctx.strokeStyle = "rgba(0, 255, 255, 0.85)";
                 ctx.stroke();
 
-                // Círculo interior concéntrico punteado o fino
+                // Círculo interior concéntrico más fino
                 ctx.beginPath();
-                ctx.arc(centroX, centroY, radioSello - 8, 0, Math.PI * 2);
-                ctx.lineWidth = 1.5;
-                ctx.strokeStyle = "#008b8b";
+                ctx.arc(centroX, centroY, radioSello - 7, 0, Math.PI * 2);
+                ctx.lineWidth = 1.2;
+                ctx.strokeStyle = "rgba(0, 139, 139, 0.85)";
                 ctx.stroke();
 
                 ctx.restore();
 
-                // 3. Texto interior del sello
-                ctx.fillStyle = "#ffffff";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
+                // 3. Función auxiliar para texto con trazo y sombra (garantiza total legibilidad sin tapar la imagen)
+                function dibujarTextosello(texto, posX, posY, fontSize, colorTexto, esNegrita = false) {
+                    ctx.save();
+                    ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+                    ctx.shadowBlur = 6;
+                    ctx.lineWidth = 3;
+                    ctx.strokeStyle = "rgba(0, 0, 0, 0.9)";
+                    
+                    ctx.font = `${esNegrita ? 'bold' : ''} ${fontSize}px 'Courier New', monospace`;
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+
+                    // Trazo negro exterior para contraste perfecto
+                    ctx.strokeText(texto, posX, posY);
+
+                    // Color principal del texto (celestes/blancos brillantes)
+                    ctx.fillStyle = colorTexto;
+                    ctx.fillText(texto, posX, posY);
+                    ctx.restore();
+                }
 
                 const fontGrande = Math.max(11, Math.floor(radioSello * 0.22));
                 const fontChico = Math.max(9, Math.floor(radioSello * 0.17));
 
-                // Líneas de texto dentro del sello redondo
-                ctx.font = `bold ${fontGrande}px 'Special Elite', monospace`;
-                ctx.fillText("VENTANIYA", centroX, centroY - radioSello * 0.35);
+                // 4. Escribir los datos dentro del sello transparente
+                dibujarTextosello("VENTANIYA", centroX, centroY - radioSello * 0.38, fontGrande, "#ffffff", true);
+                dibujarTextosello(`POSTA ${posta}`, centroX, centroY - radioSello * 0.08, Math.floor(fontGrande * 1.15), "#00ffff", true);
+                dibujarTextosello(`TIME: ${tiempoStr}`, centroX, centroY + radioSello * 0.20, fontChico, "#d8f8ff", false);
+                dibujarTextosello(`ID: ${hashMatematico.substring(0, 8)}`, centroX, centroY + radioSello * 0.48, Math.floor(fontChico * 0.85), "#a5f3fc", false);
 
-                ctx.font = `bold ${fontGrande * 1.2}px 'Courier New', monospace`;
-                ctx.fillStyle = "#00ffff";
-                ctx.fillText(`POSTA ${posta}`, centroX, centroY - radioSello * 0.05);
-
-                ctx.font = `${fontChico}px 'Courier New', monospace`;
-                ctx.fillStyle = "#d8f8ff";
-                ctx.fillText(`TIME: ${tiempoStr}`, centroX, centroY + radioSello * 0.25);
-
-                ctx.font = `${Math.floor(fontChico * 0.85)}px 'Courier New', monospace`;
-                ctx.fillStyle = "#a5f3fc";
-                ctx.fillText(`ID: ${hashMatematico.substring(0, 8)}`, centroX, centroY + radioSello * 0.52);
-
-                // 4. Generar descarga automática
+                // 5. Generar descarga automática
                 const enlaceFinal = document.createElement('a');
                 enlaceFinal.download = `${titulo.toLowerCase().replace(/\s+/g, '_')}_ventaniya1002.jpg`;
                 enlaceFinal.href = canvas.toDataURL('image/jpeg', 0.95);

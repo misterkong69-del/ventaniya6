@@ -119,10 +119,14 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        function corregirUrlGitHub(url) {
+        // Función inteligente para limpiar rutas y asegurar que cargue los archivos locales del repo
+        function limpiarRutaImagen(url) {
             if (!url) return '';
-            if (url.includes('github.com') && url.includes('/blob/')) {
-                return url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+            // Si guardaste el link completo de github, extraemos solo el nombre del archivo final
+            if (url.includes('github.com') || url.includes('raw.githubusercontent.com')) {
+                const partes = url.split('/');
+                const nombreArchivo = partes[partes.length - 1].split('?')[0]; // Remueve parámetros extra
+                return nombreArchivo; // Devuelve solo "querandi.png", "estacion.png", etc.
             }
             return url;
         }
@@ -130,11 +134,10 @@
         async function cargarVidrieraCompleta() {
             const contenedor = document.getElementById('vidriera-container');
             try {
-                // Conectado a tu colección real "estampiyas_mdw"
                 const querySnapshot = await getDocs(collection(db, "estampiyas_mdw"));
                 
                 if (querySnapshot.empty) {
-                    contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b; padding: 40px;">No hay estampas en la base todavía.</div>`;
+                    contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b; padding: 40px;">No hay registros en la base.</div>`;
                     return;
                 }
 
@@ -142,8 +145,8 @@
 
                 querySnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
-                    let imagenSrc = data.imagen_url || data.stamp_url || '';
-                    imagenSrc = corregirUrlGitHub(imagenSrc);
+                    let rutaCruda = data.imagen_url || data.stamp_url || '';
+                    let imagenSrc = limpiarRutaImagen(rutaCruda);
                     
                     const titulo = data.titulo || 'Estampa';
                     const posta = data.id_posta || '1002';
@@ -176,7 +179,7 @@
 
             } catch (error) {
                 console.error("Error:", error);
-                contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b;">Error de conexión con la base de datos.</div>`;
+                contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b;">Error al cargar los elementos.</div>`;
             }
         }
 
@@ -192,10 +195,8 @@
                 canvas.width = img.naturalWidth;
                 canvas.height = img.naturalHeight;
 
-                // Dibuja la imagen original
                 ctx.drawImage(img, 0, 0);
 
-                // Obtener fecha y hora exacta en formato 24hs con milisegundos
                 const ahora = new Date();
                 const horas = String(ahora.getHours()).padStart(2, '0');
                 const minutos = String(ahora.getMinutes()).padStart(2, '0');
@@ -203,36 +204,28 @@
                 const milisegundos = String(ahora.getMilliseconds()).padStart(3, '0');
                 const tiempoAtomico = `${horas}:${minutos}:${segundos}.${milisegundos}`;
 
-                // Configuración del sello atómico
                 const padding = Math.max(20, canvas.width * 0.03);
                 const rectWidth = canvas.width * 0.44;
                 const rectHeight = canvas.height * 0.16;
                 const x = canvas.width - rectWidth - padding;
                 const y = canvas.height - rectHeight - padding;
 
-                // Fondo oscuro del sello con borde cian brillante
                 ctx.fillStyle = "rgba(11, 19, 26, 0.9)";
                 ctx.fillRect(x, y, rectWidth, rectHeight);
                 ctx.strokeStyle = "#00ffff";
                 ctx.lineWidth = Math.max(2, canvas.width * 0.004);
                 ctx.strokeRect(x, y, rectWidth, rectHeight);
 
-                // Textos del sello atómico en cian brillante
                 ctx.fillStyle = "#00ffff";
-                
-                // Línea 1: Ventanita y Posta
                 ctx.font = `bold ${Math.max(12, canvas.width * 0.022)}px 'Courier New', monospace`;
                 ctx.fillText(`VENTANITA - POSTA ${posta}`, x + padding, y + (rectHeight * 0.30));
                 
-                // Línea 2: Hora en formato 24hs con milisegundos
                 ctx.font = `${Math.max(11, canvas.width * 0.020)}px 'Courier New', monospace`;
                 ctx.fillText(`TIME: ${tiempoAtomico}`, x + padding, y + (rectHeight * 0.60));
 
-                // Línea 3: Hash
                 ctx.font = `${Math.max(10, canvas.width * 0.017)}px 'Courier New', monospace`;
                 ctx.fillText(`HASH: ${hash}`, x + padding, y + (rectHeight * 0.85));
 
-                // Descarga automática de la imagen con el sello aplicado
                 const enlaceFinal = document.createElement('a');
                 enlaceFinal.download = `${titulo.toLowerCase().replace(/\s+/g, '_')}_atomica.jpg`;
                 enlaceFinal.href = canvas.toDataURL('image/jpeg', 0.95);
@@ -240,7 +233,7 @@
             };
 
             img.onerror = () => {
-                alert("No se pudo cargar la imagen para estampar. Verificá la URL.");
+                alert("No se pudo cargar la imagen local para estampar.");
             };
         }
 

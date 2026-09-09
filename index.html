@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Carga — Ventaniya 6</title>
+    <title>Vidriera — Ventaniya 6</title>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
     <style>
         body {
@@ -11,140 +11,235 @@
             color: #d8f8ff;
             font-family: 'Courier Prime', monospace;
             margin: 0;
-            padding: 30px;
+            padding: 20px;
         }
-        .container {
-            max-width: 600px;
+        header {
+            text-align: center;
+            border-bottom: 2px dashed #00ffff;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+        header h1 {
+            font-family: 'Special Elite', cursive;
+            font-size: 1.8rem;
+            margin: 8px 0 0 0;
+            color: #ffffff;
+            text-shadow: 0 0 10px rgba(0,255,255,0.7);
+        }
+        .vidriera-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
             margin: 0 auto;
+        }
+        .tarjeta-estampiya {
             background-color: #111d28;
             border: 3px solid #008b8b;
             border-radius: 8px;
-            padding: 25px;
-            box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+            padding: 15px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.15);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
-        h1 {
-            font-family: 'Special Elite', cursive;
-            color: #ffffff;
-            text-align: center;
-            text-shadow: 0 0 10px rgba(0,255,255,0.7);
-            margin-bottom: 25px;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        label {
-            display: block;
-            color: #00ffff;
-            font-weight: bold;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            background-color: #0b131a;
+        .estampiya-frame {
+            background: #0b131a;
+            padding: 8px;
             border: 2px solid #00ffff;
             border-radius: 4px;
-            color: #ffffff;
-            font-family: 'Courier Prime', monospace;
-            box-sizing: border-box;
+            margin-bottom: 12px;
         }
-        .btn-cargar {
+        .estampiya-frame img {
+            width: 100%;
+            height: auto;
+            border-radius: 2px;
+            display: block;
+        }
+        .info-estampa {
+            font-size: 0.8rem;
+            margin-bottom: 12px;
+            line-height: 1.4;
+            color: #a5f3fc;
+        }
+        .info-estampa h3 {
+            font-family: 'Special Elite', cursive;
+            font-size: 1rem;
+            color: #ffffff;
+            margin: 0 0 5px 0;
+        }
+        .btn-descarga-mdw {
             background-color: #00ffff;
             color: #070c10;
             border: none;
-            padding: 14px;
+            padding: 10px;
             font-family: 'Special Elite', cursive;
             font-weight: bold;
-            font-size: 1rem;
+            font-size: 0.85rem;
             cursor: pointer;
             width: 100%;
             border-radius: 4px;
-            box-shadow: 0 0 15px rgba(0,255,255,0.4);
-            margin-top: 10px;
+            box-shadow: 0 0 10px rgba(0,255,255,0.3);
+            transition: background 0.2s;
         }
-        .btn-cargar:hover {
+        .btn-descarga-mdw:hover {
             background-color: #ffffff;
-        }
-        #status {
-            margin-top: 20px;
-            text-align: center;
-            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>PANEL DE CARGA LOCAL</h1>
-        
-        <div class="form-group">
-            <label for="imagenUrlInput">Nombre exacto del archivo PNG en tu repo:</label>
-            <input type="text" id="imagenUrlInput" placeholder="Ej: aldea1.png">
-        </div>
+    <header>
+        <h1>VENTANIYA 6</h1>
+        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Archivo visual y sello atómico de descarga.</p>
+    </header>
 
-        <div class="form-group">
-            <label for="tituloInput">Título de la Estampa:</label>
-            <input type="text" id="tituloInput" placeholder="Ej: aldea1">
-        </div>
+    <main id="vidriera-container" class="vidriera-grid">
+        <!-- Renderizado dinámico local -->
+    </main>
 
-        <div class="form-group">
-            <label for="postaInput">Número de Posta:</label>
-            <input type="text" id="postaInput" value="1002">
-        </div>
-
-        <div class="form-group">
-            <label for="hashInput">Hash Base:</label>
-            <input type="text" id="hashInput" value="MDW-2026">
-        </div>
-
-        <button class="btn-cargar" onclick="guardarLocalmente()">🚀 GUARDAR PIEZA</button>
-
-        <div id="status"></div>
-    </div>
+    <canvas id="canvas-sello" style="display:none;"></canvas>
 
     <script>
-        function guardarLocalmente() {
-            const archivo = document.getElementById('imagenUrlInput').value.trim();
-            const titulo = document.getElementById('tituloInput').value.trim();
-            const id_posta = document.getElementById('postaInput').value.trim();
-            const hash_base = document.getElementById('hashInput').value.trim();
-            const statusDiv = document.getElementById('status');
+        // Piezas predeterminadas basadas en los archivos de tu repositorio
+        const piezasDefault = [
+            { id: "hash_aldea1_1122", titulo: "aldea1", archivo: "aldea1.png", posta: "1002" },
+            { id: "hash_estacion_3344", titulo: "estacion", archivo: "estacion.png", posta: "1002" },
+            { id: "hash_querandi_5566", titulo: "querandi", archivo: "querandi.png", posta: "1002" }
+        ];
 
-            if (!archivo || !titulo) {
-                statusDiv.style.color = "#ff6b6b";
-                statusDiv.innerText = "⚠️ Completá el archivo y el título.";
+        function cargarVidriera() {
+            const contenedor = document.getElementById('vidriera-container');
+            contenedor.innerHTML = "";
+
+            let piezasGuardadas = JSON.parse(localStorage.getItem('ventaniya_piezas') || 'null');
+            if (!piezasGuardadas) {
+                piezasGuardadas = piezasDefault;
+                localStorage.setItem('ventaniya_piezas', JSON.stringify(piezasDefault));
+            }
+
+            if (piezasGuardadas.length === 0) {
+                contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #00ffff; padding: 40px;">No hay piezas cargadas.</div>`;
                 return;
             }
 
-            try {
-                // Recuperar piezas existentes del almacenamiento local
-                let piezas = JSON.parse(localStorage.getItem('ventaniya_piezas') || '[]');
+            piezasGuardadas.forEach(item => {
+                const tarjeta = document.createElement('div');
+                tarjeta.className = 'tarjeta-estampiya';
                 
-                // Generar un ID Hash único para la pieza
-                const hashMatematico = Math.random().toString(36).substring(2, 10);
+                tarjeta.innerHTML = `
+                    <div>
+                        <div class="estampiya-frame">
+                            <img src="${item.archivo}" alt="${item.titulo}" crossorigin="anonymous">
+                        </div>
+                        <div class="info-estampa">
+                            <h3>${item.titulo}</h3>
+                            <div><strong>Posta:</strong> ${item.posta}</div>
+                            <div><strong>ID Hash:</strong> ${item.id}</div>
+                        </div>
+                    </div>
+                    <button class="btn-descarga-mdw">📥 DESCARGAR CON SELLO REDONDO</button>
+                `;
 
-                piezas.push({
-                    id: hashMatematico,
-                    archivo: archivo,
-                    titulo: titulo,
-                    posta: id_posta,
-                    hash_base: hash_base
+                const btnDescarga = tarjeta.querySelector('.btn-descarga-mdw');
+                btnDescarga.addEventListener('click', () => {
+                    descargarConSelloRedondo(item.archivo, item.titulo, item.posta, item.id);
                 });
 
-                localStorage.setItem('ventaniya_piezas', JSON.stringify(piezas));
-
-                statusDiv.style.color = "#4ade80";
-                statusDiv.innerText = "¡Guardado con éxito! Ya se ve en la vidriera.";
-                
-                document.getElementById('imagenUrlInput').value = '';
-                document.getElementById('tituloInput').value = '';
-            } catch (e) {
-                console.error(e);
-                statusDiv.style.color = "#ff6b6b";
-                statusDiv.innerText = "❌ Error al guardar localmente.";
-            }
+                contenedor.appendChild(tarjeta);
+            });
         }
+
+        function descargarConSelloRedondo(urlImagen, titulo, posta, hashMatematico) {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = urlImagen;
+
+            img.onload = () => {
+                const canvas = document.getElementById('canvas-sello');
+                const ctx = canvas.getContext('2d');
+
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+
+                // 1. Dibujar imagen original
+                ctx.drawImage(img, 0, 0);
+
+                // Obtener hora actual para el sello
+                const ahora = new Date();
+                const horas = String(ahora.getHours()).padStart(2, '0');
+                const minutos = String(ahora.getMinutes()).padStart(2, '0');
+                const segundos = String(ahora.getSeconds()).padStart(2, '0');
+                const tiempoStr = `${horas}:${minutos}:${segundos}`;
+
+                // 2. Configurar dimensiones proporcionales del sello redondo (abajo a la derecha)
+                const radioSello = Math.max(70, Math.floor(canvas.width * 0.13));
+                const centroX = canvas.width - radioSello - 40;
+                const centroY = canvas.height - radioSello - 40;
+
+                ctx.save();
+
+                // Sombra general del sello para darle relieve físico
+                ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+                ctx.shadowBlur = 12;
+                ctx.shadowOffsetX = 4;
+                ctx.shadowOffsetY = 4;
+
+                // Círculo exterior principal (cian brillante estilo neón/archivo)
+                ctx.beginPath();
+                ctx.arc(centroX, centroY, radioSello, 0, Math.PI * 2);
+                ctx.lineWidth = Math.max(4, radioSello * 0.08);
+                ctx.strokeStyle = "#00ffff";
+                ctx.fillStyle = "rgba(11, 19, 26, 0.82)"; // Fondo semitransparente oscuro para que resalte
+                ctx.fill();
+                ctx.stroke();
+
+                // Círculo interior concéntrico punteado o fino
+                ctx.beginPath();
+                ctx.arc(centroX, centroY, radioSello - 8, 0, Math.PI * 2);
+                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = "#008b8b";
+                ctx.stroke();
+
+                ctx.restore();
+
+                // 3. Texto interior del sello
+                ctx.fillStyle = "#ffffff";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+
+                const fontGrande = Math.max(11, Math.floor(radioSello * 0.22));
+                const fontChico = Math.max(9, Math.floor(radioSello * 0.17));
+
+                // Líneas de texto dentro del sello redondo
+                ctx.font = `bold ${fontGrande}px 'Special Elite', monospace`;
+                ctx.fillText("VENTANIYA", centroX, centroY - radioSello * 0.35);
+
+                ctx.font = `bold ${fontGrande * 1.2}px 'Courier New', monospace`;
+                ctx.fillStyle = "#00ffff";
+                ctx.fillText(`POSTA ${posta}`, centroX, centroY - radioSello * 0.05);
+
+                ctx.font = `${fontChico}px 'Courier New', monospace`;
+                ctx.fillStyle = "#d8f8ff";
+                ctx.fillText(`TIME: ${tiempoStr}`, centroX, centroY + radioSello * 0.25);
+
+                ctx.font = `${Math.floor(fontChico * 0.85)}px 'Courier New', monospace`;
+                ctx.fillStyle = "#a5f3fc";
+                ctx.fillText(`ID: ${hashMatematico.substring(0, 8)}`, centroX, centroY + radioSello * 0.52);
+
+                // 4. Generar descarga automática
+                const enlaceFinal = document.createElement('a');
+                enlaceFinal.download = `${titulo.toLowerCase().replace(/\s+/g, '_')}_ventaniya1002.jpg`;
+                enlaceFinal.href = canvas.toDataURL('image/jpeg', 0.95);
+                enlaceFinal.click();
+            };
+
+            img.onerror = () => {
+                alert("No se pudo cargar la imagen para estampar. Comprobá que el archivo exista.");
+            };
+        }
+
+        window.onload = cargarVidriera;
     </script>
 </body>
 </html>

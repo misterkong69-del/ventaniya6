@@ -91,7 +91,7 @@
 
     <header>
         <h1>VENTANIYA 6</h1>
-        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Archivo visual y sello alfanumérico de descarga.</p>
+        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Archivo visual y sello atómico de línea de tiempo.</p>
     </header>
 
     <main id="vidriera-container" class="vidriera-grid">
@@ -101,7 +101,6 @@
     <canvas id="canvas-sello" style="display:none;"></canvas>
 
     <script>
-        // Generador robusto de letras y números reales
         function generarHashReal() {
             const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
             let resultado = "v6-";
@@ -113,7 +112,7 @@
 
         const piezasDefault = [
             { id: generarHashReal(), titulo: "aldea1", archivo: "aldea1.png", posta: "1002" },
-            { id: generarHashReal(), titulo: "estacion", archivo: "estacion.png", posta: "1002" },
+            { id: { id: generarHashReal() }, titulo: "estacion", archivo: "estacion.png", posta: "1002" },
             { id: generarHashReal(), titulo: "querandi", archivo: "querandi.png", posta: "1002" }
         ];
 
@@ -123,12 +122,12 @@
 
             let piezasGuardadas = JSON.parse(localStorage.getItem('ventaniya_piezas') || 'null');
             
-            // Si no hay o tienen IDs viejos/feos, los regeneramos con formato alfanumérico limpio
             if (!piezasGuardadas || piezasGuardadas.some(p => !p.id || p.id.includes('hash_'))) {
-                piezasGuardadas = piezasDefault.map(p => ({
-                    ...p,
-                    id: generarHashReal()
-                }));
+                piezasGuardadas = [
+                    { id: generarHashReal(), titulo: "aldea1", archivo: "aldea1.png", posta: "1002" },
+                    { id: generarHashReal(), titulo: "estacion", archivo: "estacion.png", posta: "1002" },
+                    { id: generarHashReal(), titulo: "querandi", archivo: "querandi.png", posta: "1002" }
+                ];
                 localStorage.setItem('ventaniya_piezas', JSON.stringify(piezasGuardadas));
             }
 
@@ -147,19 +146,19 @@
                             <div><strong>ID Hash:</strong> ${item.id}</div>
                         </div>
                     </div>
-                    <button class="btn-descarga-mdw">📥 DESCARGAR CON SELLO ALFANUMÉRICO</button>
+                    <button class="btn-descarga-mdw">📥 DESCARGAR CON SELLO ATÓMICO</button>
                 `;
 
                 const btnDescarga = tarjeta.querySelector('.btn-descarga-mdw');
                 btnDescarga.addEventListener('click', () => {
-                    descargarConSelloRedondo(item.archivo, item.titulo, item.posta, item.id);
+                    descargarConSelloAtomico(item.archivo, item.titulo, item.posta, item.id);
                 });
 
                 contenedor.appendChild(tarjeta);
             });
         }
 
-        function descargarConSelloRedondo(urlImagen, titulo, posta, hashMatematico) {
+        function descargarConSelloAtomico(urlImagen, titulo, posta, hashMatematico) {
             const img = new Image();
             img.crossOrigin = "anonymous";
             img.src = urlImagen;
@@ -171,13 +170,8 @@
                 canvas.width = img.naturalWidth;
                 canvas.height = img.naturalHeight;
 
+                // Dibujar imagen original intacta
                 ctx.drawImage(img, 0, 0);
-
-                const ahora = new Date();
-                const horas = String(ahora.getHours()).padStart(2, '0');
-                const minutos = String(ahora.getMinutes()).padStart(2, '0');
-                const segundos = String(ahora.getSeconds()).padStart(2, '0');
-                const tiempoStr = `${horas}:${minutos}:${segundos}`;
 
                 const radioSello = Math.max(75, Math.floor(canvas.width * 0.13));
                 const centroX = canvas.width - radioSello - 45;
@@ -189,14 +183,13 @@
                 ctx.shadowOffsetX = 2;
                 ctx.shadowOffsetY = 2;
 
-                // Círculo exterior cian translúcido
+                // Sello redondo transparente con doble línea cian
                 ctx.beginPath();
                 ctx.arc(centroX, centroY, radioSello, 0, Math.PI * 2);
                 ctx.lineWidth = Math.max(3.5, radioSello * 0.07);
                 ctx.strokeStyle = "rgba(0, 255, 255, 0.85)";
                 ctx.stroke();
 
-                // Círculo interior
                 ctx.beginPath();
                 ctx.arc(centroX, centroY, radioSello - 7, 0, Math.PI * 2);
                 ctx.lineWidth = 1.2;
@@ -221,14 +214,13 @@
                     ctx.restore();
                 }
 
-                const fontGrande = Math.max(11, Math.floor(radioSello * 0.22));
-                const fontChico = Math.max(9, Math.floor(radioSello * 0.17));
+                const fontGrande = Math.max(12, Math.floor(radioSello * 0.25));
+                const fontMediano = Math.max(10, Math.floor(radioSello * 0.20));
 
-                // Imprimir datos limpios con el hash alfanumérico real
-                dibujarTextosello("VENTANIYA", centroX, centroY - radioSello * 0.38, fontGrande, "#ffffff", true);
-                dibujarTextosello(`POSTA ${posta}`, centroX, centroY - radioSello * 0.08, Math.floor(fontGrande * 1.15), "#00ffff", true);
-                dibujarTextosello(`TIME: ${tiempoStr}`, centroX, centroY + radioSello * 0.20, fontChico, "#d8f8ff", false);
-                dibujarTextosello(`ID: ${hashMatematico}`, centroX, centroY + radioSello * 0.48, Math.floor(fontChico * 0.82), "#a5f3fc", true);
+                // Distribución limpia del sello atómico (Sin fecha ni hora de relleno)
+                dibujarTextosello("VENTANIYA", centroX, centroY - radioSello * 0.30, fontGrande, "#ffffff", true);
+                dibujarTextosello(`POSTA ${posta}`, centroX, centroY, Math.floor(fontGrande * 1.15), "#00ffff", true);
+                dibujarTextosello(`ID: ${hashMatematico}`, centroX, centroY + radioSello * 0.32, fontMediano, "#a5f3fc", true);
 
                 const enlaceFinal = document.createElement('a');
                 enlaceFinal.download = `${titulo.toLowerCase().replace(/\s+/g, '_')}_ventaniya1002.jpg`;

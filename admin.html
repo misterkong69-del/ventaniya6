@@ -76,21 +76,21 @@
 <body>
 
     <div class="container">
-        <h1>PANEL DE CARGA LIMPIO</h1>
+        <h1>PANEL DE CARGA LOCAL</h1>
         
         <div class="form-group">
-            <label for="imagenUrlInput">URL Directa de la Imagen:</label>
-            <input type="text" id="imagenUrlInput" placeholder="https://raw.githubusercontent.com/.../imagen.jpg">
+            <label for="imagenUrlInput">Nombre exacto del archivo PNG en tu repo:</label>
+            <input type="text" id="imagenUrlInput" placeholder="Ej: aldea1.png">
         </div>
 
         <div class="form-group">
             <label for="tituloInput">Título de la Estampa:</label>
-            <input type="text" id="tituloInput" placeholder="Ej: Estampa 1">
+            <input type="text" id="tituloInput" placeholder="Ej: aldea1">
         </div>
 
         <div class="form-group">
             <label for="postaInput">Número de Posta:</label>
-            <input type="text" id="postaInput" value="1001">
+            <input type="text" id="postaInput" value="1002">
         </div>
 
         <div class="form-group">
@@ -98,64 +98,53 @@
             <input type="text" id="hashInput" value="MDW-2026">
         </div>
 
-        <button class="btn-cargar" onclick="guardarEnFirestore()">🚀 GUARDAR EN NUEVA BASE</button>
+        <button class="btn-cargar" onclick="guardarLocalmente()">🚀 GUARDAR PIEZA</button>
 
         <div id="status"></div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDnLtvnb5IW1X-HbuC3uC0Dcf6BaojmndE",
-            authDomain: "mardelasmaravillas1.firebaseapp.com",
-            projectId: "mardelasmaravillas1",
-            storageBucket: "mardelasmaravillas1.firebasestorage.app",
-            messagingSenderId: "1041475872464",
-            appId: "1:1041475872464:web:87d00298ea219bdb4aa0d5",
-            measurementId: "G-F87RCG37BW"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        window.guardarEnFirestore = async function() {
-            const url = document.getElementById('imagenUrlInput').value.trim();
+    <script>
+        function guardarLocalmente() {
+            const archivo = document.getElementById('imagenUrlInput').value.trim();
             const titulo = document.getElementById('tituloInput').value.trim();
             const id_posta = document.getElementById('postaInput').value.trim();
             const hash_base = document.getElementById('hashInput').value.trim();
             const statusDiv = document.getElementById('status');
 
-            if (!url || !titulo) {
+            if (!archivo || !titulo) {
                 statusDiv.style.color = "#ff6b6b";
-                statusDiv.innerText = "⚠️ Completá la URL y el título.";
+                statusDiv.innerText = "⚠️ Completá el archivo y el título.";
                 return;
             }
 
-            statusDiv.style.color = "#00ffff";
-            statusDiv.innerText = "⏳ Guardando...";
-
             try {
-                // Guarda estrictamente en la colección nueva
-                await addDoc(collection(db, "estampas_nuevas"), {
-                    stamp_url: url,
-                    imagen_url: url,
+                // Recuperar piezas existentes del almacenamiento local
+                let piezas = JSON.parse(localStorage.getItem('ventaniya_piezas') || '[]');
+                
+                // Generar un ID Hash único para la pieza
+                const hashMatematico = Math.random().toString(36).substring(2, 10);
+
+                piezas.push({
+                    id: hashMatematico,
+                    archivo: archivo,
                     titulo: titulo,
-                    id_posta: id_posta,
+                    posta: id_posta,
                     hash_base: hash_base
                 });
 
+                localStorage.setItem('ventaniya_piezas', JSON.stringify(piezas));
+
                 statusDiv.style.color = "#4ade80";
-                statusDiv.innerText = "¡Guardado con éxito en la nueva base!";
+                statusDiv.innerText = "¡Guardado con éxito! Ya se ve en la vidriera.";
+                
                 document.getElementById('imagenUrlInput').value = '';
                 document.getElementById('tituloInput').value = '';
             } catch (e) {
                 console.error(e);
                 statusDiv.style.color = "#ff6b6b";
-                statusDiv.innerText = "❌ Error al guardar.";
+                statusDiv.innerText = "❌ Error al guardar localmente.";
             }
-        };
+        }
     </script>
 </body>
 </html>

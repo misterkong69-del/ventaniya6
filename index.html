@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Clandestino de Carga — EstampiYA!</title>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #0b131a;
+            color: #d8f8ff;
+            font-family: 'Courier Prime', monospace;
+            margin: 0;
+            padding: 30px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #111d28;
+            border: 3px solid #008b8b;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: 0 0 25px rgba(0, 255, 255, 0.2);
+        }
+        h1 {
+            font-family: 'Special Elite', cursive;
+            color: #ffffff;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(0,255,255,0.7);
+            margin-bottom: 25px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            color: #00ffff;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        input[type="text"], input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            background-color: #0b131a;
+            border: 2px solid #00ffff;
+            border-radius: 4px;
+            color: #ffffff;
+            font-family: 'Courier Prime', monospace;
+            box-sizing: border-box;
+        }
+        input[type="file"] {
+            cursor: pointer;
+        }
+        .btn-cargar {
+            background-color: #00ffff;
+            color: #070c10;
+            border: none;
+            padding: 14px;
+            font-family: 'Special Elite', cursive;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            border-radius: 4px;
+            box-shadow: 0 0 15px rgba(0,255,255,0.4);
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+        .btn-cargar:hover {
+            background-color: #ffffff;
+            box-shadow: 0 0 25px rgba(0,255,255,0.9);
+        }
+        #status {
+            margin-top: 20px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>PANEL DE CARGA — ESTAMPIYA!</h1>
+        
+        <div class="form-group">
+            <label for="imagenUrlInput">URL Directa o Raw de la Imagen (GitHub / Firebase Storage):</label>
+            <input type="text" id="imagenUrlInput" placeholder="https://raw.githubusercontent.com/.../imagen.png">
+        </div>
+
+        <div class="form-group">
+            <label for="tituloInput">Título de la Estampa:</label>
+            <input type="text" id="tituloInput" placeholder="Ej: Auto 2, Paisaje Mardel, etc.">
+        </div>
+
+        <div class="form-group">
+            <label for="postaInput">Número de Posta:</label>
+            <input type="text" id="postaInput" value="1005">
+        </div>
+
+        <div class="form-group">
+            <label for="hashInput">Hash Base:</label>
+            <input type="text" id="hashInput" value="MDW-KONG-2026">
+        </div>
+
+        <button class="btn-cargar" onclick="guardarEnFirestore()">🚀 REGISTRAR ESTAMPA EN FIRESTORE</button>
+
+        <div id="status"></div>
+    </div>
+
+    <!-- Script de conexión a Firebase Firestore -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDnLtvnb5IW1X-HbuC3uC0Dcf6BaojmndE",
+            authDomain: "mardelasmaravillas1.firebaseapp.com",
+            projectId: "mardelasmaravillas1",
+            storageBucket: "mardelasmaravillas1.firebasestorage.app",
+            messagingSenderId: "1041475872464",
+            appId: "1:1041475872464:web:87d00298ea219bdb4aa0d5",
+            measurementId: "G-F87RCG37BW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        window.guardarEnFirestore = async function() {
+            const url = document.getElementById('imagenUrlInput').value.trim();
+            const titulo = document.getElementById('tituloInput').value.trim();
+            const id_posta = document.getElementById('postaInput').value.trim();
+            const hash_base = document.getElementById('hashInput').value.trim();
+            const statusDiv = document.getElementById('status');
+
+            if (!url || !titulo) {
+                statusDiv.style.color = "#ff6b6b";
+                statusDiv.innerText = "⚠️ Por favor completá al menos la URL de la imagen y el título.";
+                return;
+            }
+
+            statusDiv.style.color = "#00ffff";
+            statusDiv.innerText = "⏳ Guardando estampa en la base de datos...";
+
+            try {
+                // Guardamos usando ambos nombres (stamp_url e imagen_url) para garantizar compatibilidad total
+                await addDoc(collection(db, "estampiyas_mdw"), {
+                    stamp_url: url,
+                    imagen_url: url,
+                    titulo: titulo,
+                    id_posta: id_posta,
+                    hash_base: hash_base
+                });
+
+                statusDiv.style.color = "#4ade80";
+                statusDiv.innerText = "¡Estampa registrada con éxito! Ya podés verla en la vidriera.";
+                
+                // Limpiar campos para la próxima carga
+                document.getElementById('imagenUrlInput').value = '';
+                document.getElementById('tituloInput').value = '';
+            } catch (e) {
+                console.error("Error al añadir el documento: ", e);
+                statusDiv.style.color = "#ff6b6b";
+                statusDiv.innerText = "❌ Error al guardar en Firestore. Revisá la consola.";
+            }
+        };
+    </script>
+</body>
+</html>

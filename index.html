@@ -91,7 +91,7 @@
 
     <header>
         <h1>VENTANIYA 6</h1>
-        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Archivo visual y sello atómico de línea de tiempo.</p>
+        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Archivo visual y sello atómico con línea de tiempo y hash.</p>
     </header>
 
     <main id="vidriera-container" class="vidriera-grid">
@@ -112,7 +112,7 @@
 
         const piezasDefault = [
             { id: generarHashReal(), titulo: "aldea1", archivo: "aldea1.png", posta: "1002" },
-            { id: { id: generarHashReal() }, titulo: "estacion", archivo: "estacion.png", posta: "1002" },
+            { id: generarHashReal(), titulo: "estacion", archivo: "estacion.png", posta: "1002" },
             { id: generarHashReal(), titulo: "querandi", archivo: "querandi.png", posta: "1002" }
         ];
 
@@ -146,19 +146,19 @@
                             <div><strong>ID Hash:</strong> ${item.id}</div>
                         </div>
                     </div>
-                    <button class="btn-descarga-mdw">📥 DESCARGAR CON SELLO ATÓMICO</button>
+                    <button class="btn-descarga-mdw">📥 DESCARGAR CON SELLO ATÓMICO COMPLETO</button>
                 `;
 
                 const btnDescarga = tarjeta.querySelector('.btn-descarga-mdw');
                 btnDescarga.addEventListener('click', () => {
-                    descargarConSelloAtomico(item.archivo, item.titulo, item.posta, item.id);
+                    descargarConSelloAtomicoCompleto(item.archivo, item.titulo, item.posta, item.id);
                 });
 
                 contenedor.appendChild(tarjeta);
             });
         }
 
-        function descargarConSelloAtomico(urlImagen, titulo, posta, hashMatematico) {
+        function descargarConSelloAtomicoCompleto(urlImagen, titulo, posta, hashMatematico) {
             const img = new Image();
             img.crossOrigin = "anonymous";
             img.src = urlImagen;
@@ -170,10 +170,18 @@
                 canvas.width = img.naturalWidth;
                 canvas.height = img.naturalHeight;
 
-                // Dibujar imagen original intacta
+                // 1. Dibujar imagen original intacta
                 ctx.drawImage(img, 0, 0);
 
-                const radioSello = Math.max(75, Math.floor(canvas.width * 0.13));
+                // Línea de tiempo atómica exacta hasta milisegundo
+                const ahora = new Date();
+                const horas = String(ahora.getHours()).padStart(2, '0');
+                const minutos = String(ahora.getMinutes()).padStart(2, '0');
+                const segundos = String(ahora.getSeconds()).padStart(2, '0');
+                const milisegundos = String(ahora.getMilliseconds()).padStart(3, '0');
+                const tiempoAtomico = `${horas}:${minutos}:${segundos}.${milisegundos}`;
+
+                const radioSello = Math.max(85, Math.floor(canvas.width * 0.14));
                 const centroX = canvas.width - radioSello - 45;
                 const centroY = canvas.height - radioSello - 45;
 
@@ -183,7 +191,7 @@
                 ctx.shadowOffsetX = 2;
                 ctx.shadowOffsetY = 2;
 
-                // Sello redondo transparente con doble línea cian
+                // Doble círculo translúcido del sello
                 ctx.beginPath();
                 ctx.arc(centroX, centroY, radioSello, 0, Math.PI * 2);
                 ctx.lineWidth = Math.max(3.5, radioSello * 0.07);
@@ -214,13 +222,14 @@
                     ctx.restore();
                 }
 
-                const fontGrande = Math.max(12, Math.floor(radioSello * 0.25));
-                const fontMediano = Math.max(10, Math.floor(radioSello * 0.20));
+                const fontGrande = Math.max(11, Math.floor(radioSello * 0.21));
+                const fontChico = Math.max(9, Math.floor(radioSello * 0.16));
 
-                // Distribución limpia del sello atómico (Sin fecha ni hora de relleno)
-                dibujarTextosello("VENTANIYA", centroX, centroY - radioSello * 0.30, fontGrande, "#ffffff", true);
-                dibujarTextosello(`POSTA ${posta}`, centroX, centroY, Math.floor(fontGrande * 1.15), "#00ffff", true);
-                dibujarTextosello(`ID: ${hashMatematico}`, centroX, centroY + radioSello * 0.32, fontMediano, "#a5f3fc", true);
+                // 2. Estructura completa dentro del sello: VENTANIYA, POSTA, LÍNEA DE TIEMPO (con milisegundo) y HASH alfanumérico
+                dibujarTextosello("VENTANIYA", centroX, centroY - radioSello * 0.42, fontGrande, "#ffffff", true);
+                dibujarTextosello(`POSTA ${posta}`, centroX, centroY - radioSello * 0.15, Math.floor(fontGrande * 1.1), "#00ffff", true);
+                dibujarTextosello(tiempoAtomico, centroX, centroY + radioSello * 0.10, fontChico, "#d8f8ff", true);
+                dibujarTextosello(`ID: ${hashMatematico}`, centroX, centroY + radioSello * 0.38, fontChico, "#a5f3fc", true);
 
                 const enlaceFinal = document.createElement('a');
                 enlaceFinal.download = `${titulo.toLowerCase().replace(/\s+/g, '_')}_ventaniya1002.jpg`;

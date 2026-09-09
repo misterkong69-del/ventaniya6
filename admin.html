@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Clandestino de Carga — EstampiYA!</title>
+    <title>Panel de Carga — Ventaniya 6</title>
     <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
     <style>
         body {
@@ -39,7 +39,7 @@
             margin-bottom: 8px;
             font-size: 0.9rem;
         }
-        input[type="text"], input[type="file"] {
+        input[type="text"] {
             width: 100%;
             padding: 12px;
             background-color: #0b131a;
@@ -48,9 +48,6 @@
             color: #ffffff;
             font-family: 'Courier Prime', monospace;
             box-sizing: border-box;
-        }
-        input[type="file"] {
-            cursor: pointer;
         }
         .btn-cargar {
             background-color: #00ffff;
@@ -64,12 +61,10 @@
             width: 100%;
             border-radius: 4px;
             box-shadow: 0 0 15px rgba(0,255,255,0.4);
-            transition: all 0.3s ease;
             margin-top: 10px;
         }
         .btn-cargar:hover {
             background-color: #ffffff;
-            box-shadow: 0 0 25px rgba(0,255,255,0.9);
         }
         #status {
             margin-top: 20px;
@@ -81,34 +76,33 @@
 <body>
 
     <div class="container">
-        <h1>PANEL DE CARGA — ESTAMPIYA!</h1>
+        <h1>PANEL DE CARGA LIMPIO</h1>
         
         <div class="form-group">
-            <label for="imagenUrlInput">URL Directa o Raw de la Imagen (GitHub / Firebase Storage):</label>
-            <input type="text" id="imagenUrlInput" placeholder="https://raw.githubusercontent.com/.../imagen.png">
+            <label for="imagenUrlInput">URL Directa de la Imagen:</label>
+            <input type="text" id="imagenUrlInput" placeholder="https://raw.githubusercontent.com/.../imagen.jpg">
         </div>
 
         <div class="form-group">
             <label for="tituloInput">Título de la Estampa:</label>
-            <input type="text" id="tituloInput" placeholder="Ej: Auto 2, Paisaje Mardel, etc.">
+            <input type="text" id="tituloInput" placeholder="Ej: Estampa 1">
         </div>
 
         <div class="form-group">
             <label for="postaInput">Número de Posta:</label>
-            <input type="text" id="postaInput" value="1005">
+            <input type="text" id="postaInput" value="1001">
         </div>
 
         <div class="form-group">
             <label for="hashInput">Hash Base:</label>
-            <input type="text" id="hashInput" value="MDW-KONG-2026">
+            <input type="text" id="hashInput" value="MDW-2026">
         </div>
 
-        <button class="btn-cargar" onclick="guardarEnFirestore()">🚀 REGISTRAR ESTAMPA EN FIRESTORE</button>
+        <button class="btn-cargar" onclick="guardarEnFirestore()">🚀 GUARDAR EN NUEVA BASE</button>
 
         <div id="status"></div>
     </div>
 
-    <!-- Script de conexión a Firebase Firestore -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -135,16 +129,16 @@
 
             if (!url || !titulo) {
                 statusDiv.style.color = "#ff6b6b";
-                statusDiv.innerText = "⚠️ Por favor completá al menos la URL de la imagen y el título.";
+                statusDiv.innerText = "⚠️ Completá la URL y el título.";
                 return;
             }
 
             statusDiv.style.color = "#00ffff";
-            statusDiv.innerText = "⏳ Guardando estampa en la base de datos...";
+            statusDiv.innerText = "⏳ Guardando...";
 
             try {
-                // Guardamos usando ambos nombres (stamp_url e imagen_url) para garantizar compatibilidad total
-                await addDoc(collection(db, "estampiyas_mdw"), {
+                // Guarda estrictamente en la colección nueva
+                await addDoc(collection(db, "estampas_nuevas"), {
                     stamp_url: url,
                     imagen_url: url,
                     titulo: titulo,
@@ -153,15 +147,13 @@
                 });
 
                 statusDiv.style.color = "#4ade80";
-                statusDiv.innerText = "¡Estampa registrada con éxito! Ya podés verla en la vidriera.";
-                
-                // Limpiar campos para la próxima carga
+                statusDiv.innerText = "¡Guardado con éxito en la nueva base!";
                 document.getElementById('imagenUrlInput').value = '';
                 document.getElementById('tituloInput').value = '';
             } catch (e) {
-                console.error("Error al añadir el documento: ", e);
+                console.error(e);
                 statusDiv.style.color = "#ff6b6b";
-                statusDiv.innerText = "❌ Error al guardar en Firestore. Revisá la consola.";
+                statusDiv.innerText = "❌ Error al guardar.";
             }
         };
     </script>

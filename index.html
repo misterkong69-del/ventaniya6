@@ -96,8 +96,6 @@
         </div>
     </main>
 
-    <canvas id="canvas-sello" style="display:none;"></canvas>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -115,6 +113,15 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // Función para arreglar enlaces de GitHub automáticamente si se guardaron mal
+        function corregirUrlGitHub(url) {
+            if (!url) return '';
+            if (url.includes('github.com') && url.includes('/blob/')) {
+                return url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
+            }
+            return url;
+        }
+
         async function cargarVidrieraCompleta() {
             const contenedor = document.getElementById('vidriera-container');
             try {
@@ -129,7 +136,10 @@
 
                 querySnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
-                    const imagenSrc = data.imagen_url || data.stamp_url || '';
+                    let imagenSrc = data.imagen_url || data.stamp_url || '';
+                    
+                    // Aplicamos el arreglo automático por si el link vino con "blob"
+                    imagenSrc = corregirUrlGitHub(imagenSrc);
                     
                     const tarjeta = document.createElement('div');
                     tarjeta.className = 'tarjeta-estampiya';
@@ -137,7 +147,7 @@
                     tarjeta.innerHTML = `
                         <div>
                             <div class="estampiya-frame">
-                                <img src="${imagenSrc}" alt="${data.titulo || 'Estampa'}" crossorigin="anonymous" class="img-estampa-ref">
+                                <img src="${imagenSrc}" alt="${data.titulo || 'Estampa'}" crossorigin="anonymous">
                             </div>
                             <div class="info-estampa">
                                 <h3>${data.titulo || 'Estampa'}</h3>
@@ -145,7 +155,7 @@
                                 <div><strong>Hash:</strong> ${data.hash_base || 'MDW'}</div>
                             </div>
                         </div>
-                        <button class="btn-descarga-mdw" onclick="alert('Descargando...')">📥 DESCARGAR</button>
+                        <button class="btn-descarga-mdw" onclick="window.open('${imagenSrc}', '_blank')">📥 DESCARGAR</button>
                     `;
                     contenedor.appendChild(tarjeta);
                 });

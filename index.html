@@ -81,20 +81,26 @@
             border-radius: 4px;
             box-shadow: 0 0 10px rgba(0,255,255,0.3);
         }
+        .btn-descarga-mdw:hover {
+            background-color: #ffffff;
+        }
     </style>
 </head>
 <body>
 
     <header>
         <h1>VIDRIERA DE ESTAMPIYAS</h1>
-        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Explorá el archivo visual y descargá cada pieza.</p>
+        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Explorá el archivo visual y descargá con sello atómico.</p>
     </header>
 
     <main id="vidriera-container" class="vidriera-grid">
         <div style="grid-column: 1 / -1; text-align: center; color: #00ffff; padding: 40px;">
-            Cargando la vidriera...
+            Cargando la vidriera limpia...
         </div>
     </main>
+
+    <!-- Canvas oculto para procesar el sello atómico -->
+    <canvas id="canvas-sello" style="display:none;"></canvas>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -113,7 +119,6 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Función para arreglar enlaces de GitHub automáticamente si se guardaron mal
         function corregirUrlGitHub(url) {
             if (!url) return '';
             if (url.includes('github.com') && url.includes('/blob/')) {
@@ -125,10 +130,11 @@
         async function cargarVidrieraCompleta() {
             const contenedor = document.getElementById('vidriera-container');
             try {
-                const querySnapshot = await getDocs(collection(db, "estampiyas_mdw"));
+                // Apunta a la colección limpia "estampas_nuevas"
+                const querySnapshot = await getDocs(collection(db, "estampas_nuevas"));
                 
                 if (querySnapshot.empty) {
-                    contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b; padding: 40px;">No hay estampas todavía.</div>`;
+                    contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b; padding: 40px;">No hay estampas todavía. Cargá una desde admin.html</div>`;
                     return;
                 }
 
@@ -137,9 +143,11 @@
                 querySnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
                     let imagenSrc = data.imagen_url || data.stamp_url || '';
-                    
-                    // Aplicamos el arreglo automático por si el link vino con "blob"
                     imagenSrc = corregirUrlGitHub(imagenSrc);
+                    
+                    const titulo = data.titulo || 'Estampa';
+                    const posta = data.id_posta || '1002';
+                    const hash = data.hash_base || 'MDW-2026';
                     
                     const tarjeta = document.createElement('div');
                     tarjeta.className = 'tarjeta-estampiya';
@@ -147,16 +155,22 @@
                     tarjeta.innerHTML = `
                         <div>
                             <div class="estampiya-frame">
-                                <img src="${imagenSrc}" alt="${data.titulo || 'Estampa'}" crossorigin="anonymous">
+                                <img src="${imagenSrc}" alt="${titulo}" crossorigin="anonymous">
                             </div>
                             <div class="info-estampa">
-                                <h3>${data.titulo || 'Estampa'}</h3>
-                                <div><strong>Posta:</strong> ${data.id_posta || '1001'}</div>
-                                <div><strong>Hash:</strong> ${data.hash_base || 'MDW'}</div>
+                                <h3>${titulo}</h3>
+                                <div><strong>Posta:</strong> ${posta}</div>
+                                <div><strong>Hash:</strong> ${hash}</div>
                             </div>
                         </div>
-                        <button class="btn-descarga-mdw" onclick="window.open('${imagenSrc}', '_blank')">📥 DESCARGAR</button>
+                        <button class="btn-descarga-mdw">📥 DESCARGAR CON SELLO ATÓMICO</button>
                     `;
+
+                    const btnDescarga = tarjeta.querySelector('.btn-descarga-mdw');
+                    btnDescarga.addEventListener('click', () => {
+                        descargarConSelloAtomico(imagenSrc, titulo, posta, hash);
+                    });
+
                     contenedor.appendChild(tarjeta);
                 });
 
@@ -164,6 +178,70 @@
                 console.error("Error:", error);
                 contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b;">Error de conexión.</div>`;
             }
+        }
+
+        function descargarConSelloAtomico(urlImagen, titulo, posta, hash) {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = urlImagen;
+
+            img.onload = () => {
+                const canvas = document.getElementById('canvas-sello');
+                const ctx = canvas.getContext('2d');
+
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+
+                // Dibuja la imagen original
+                ctx.drawImage(img, 0, 0);
+
+                // Obtener fecha y hora exacta en formato 24hs con milisegundos
+                const ahora = new Date();
+                const horas = String(ahora.getHours()).padStart(2, '0');
+                const minutos = String(ahora.getMinutes()).padStart(2, '0');
+                const segundos = String(ahora.getSeconds()).padStart(2, '0');
+                const milisegundos = String(ahora.getMilliseconds()).padStart(3, '0');
+                const tiempoAtomico = `${horas}:${minutos}:${segundos}.${milisegundos}`;
+
+                // Configuración del sello atómico
+                const padding = Math.max(20, canvas.width * 0.03);
+                const rectWidth = canvas.width * 0.44;
+                const rectHeight = canvas.height * 0.16;
+                const x = canvas.width - rectWidth - padding;
+                const y = canvas.height - rectHeight - padding;
+
+                // Fondo oscuro del sello con borde cian brillante
+                ctx.fillStyle = "rgba(11, 19, 26, 0.9)";
+                ctx.fillRect(x, y, rectWidth, rectHeight);
+                ctx.strokeStyle = "#00ffff";
+                ctx.lineWidth = Math.max(2, canvas.width * 0.004);
+                ctx.strokeRect(x, y, rectWidth, rectHeight);
+
+                // Textos del sello atómico en cian brillante
+                ctx.fillStyle = "#00ffff";
+                
+                // Línea 1: Ventanita y Posta
+                ctx.font = `bold ${Math.max(12, canvas.width * 0.022)}px 'Courier New', monospace`;
+                ctx.fillText(`VENTANITA - POSTA ${posta}`, x + padding, y + (rectHeight * 0.30));
+                
+                // Línea 2: Hora en formato 24hs con milisegundos
+                ctx.font = `${Math.max(11, canvas.width * 0.020)}px 'Courier New', monospace`;
+                ctx.fillText(`TIME: ${tiempoAtomico}`, x + padding, y + (rectHeight * 0.60));
+
+                // Línea 3: Hash
+                ctx.font = `${Math.max(10, canvas.width * 0.017)}px 'Courier New', monospace`;
+                ctx.fillText(`HASH: ${hash}`, x + padding, y + (rectHeight * 0.85));
+
+                // Descarga automática de la imagen con el sello aplicado
+                const enlaceFinal = document.createElement('a');
+                enlaceFinal.download = `${titulo.toLowerCase().replace(/\s+/g, '_')}_atomica.jpg`;
+                enlaceFinal.href = canvas.toDataURL('image/jpeg', 0.95);
+                enlaceFinal.click();
+            };
+
+            img.onerror = () => {
+                alert("No se pudo cargar la imagen para estampar. Verificá la URL.");
+            };
         }
 
         window.onload = cargarVidrieraCompleta;

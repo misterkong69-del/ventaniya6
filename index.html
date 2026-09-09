@@ -94,103 +94,46 @@
     </header>
 
     <main id="vidriera-container" class="vidriera-grid">
-        <div style="grid-column: 1 / -1; text-align: center; color: #00ffff; padding: 40px;">
-            Cargando archivo visual...
-        </div>
+        <!-- Renderizado directo de archivos locales -->
     </main>
 
     <canvas id="canvas-sello" style="display:none;"></canvas>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDnLtvnb5IW1X-HbuC3uC0Dcf6BaojmndE",
-            authDomain: "mardelasmaravillas1.firebaseapp.com",
-            projectId: "mardelasmaravillas1",
-            storageBucket: "mardelasmaravillas1.firebasestorage.app",
-            messagingSenderId: "1041475872464",
-            appId: "1:1041475872464:web:87d00298ea219bdb4aa0d5",
-            measurementId: "G-F87RCG37BW"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // Archivos locales fijos conocidos en el repositorio por si la base no mapea bien las URLs
-        const archivosLocalesFallback = [
-            { id: "querandi-local", titulo: "querandi", archivo: "querandi.png", posta: "1002" },
-            { id: "estacion-local", titulo: "estacion", archivo: "estacion.png", posta: "1002" }
+    <script>
+        const piezasLocales = [
+            { id: "hash_querandi_9821", titulo: "querandi", archivo: "querandi.png", posta: "1002" },
+            { id: "hash_estacion_4452", titulo: "estacion", archivo: "estacion.png", posta: "1002" }
         ];
 
-        function limpiarRutaImagen(url) {
-            if (!url) return '';
-            if (url.includes('github.com') || url.includes('raw.githubusercontent.com')) {
-                const partes = url.split('/');
-                return partes[partes.length - 1].split('?')[0];
-            }
-            return url;
-        }
-
-        async function cargarVidrieraCompleta() {
+        function cargarVidriera() {
             const contenedor = document.getElementById('vidriera-container');
             contenedor.innerHTML = "";
-            let itemsMostrados = 0;
 
-            try {
-                const querySnapshot = await getDocs(collection(db, "estampiyas_mdw"));
+            piezasLocales.forEach(item => {
+                const tarjeta = document.createElement('div');
+                tarjeta.className = 'tarjeta-estampiya';
                 
-                querySnapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    let rutaCruda = data.imagen_url || data.stamp_url || '';
-                    let imagenSrc = limpiarRutaImagen(rutaCruda);
-                    
-                    if (!imagenSrc) return;
-
-                    itemsMostrados++;
-                    const titulo = data.titulo || 'Pieza';
-                    const posta = data.id_posta || '1002';
-                    const hashMatematico = docSnap.id;
-                    
-                    renderizarTarjeta(contenedor, imagenSrc, titulo, posta, hashMatematico);
-                });
-            } catch (error) {
-                console.warn("Aviso de Firestore:", error);
-            }
-
-            // Si por Firestore no levantó nada o faltaban archivos, garantizamos los locales del repo
-            if (itemsMostrados === 0) {
-                archivosLocalesFallback.forEach(item => {
-                    renderizarTarjeta(contenedor, item.archivo, item.titulo, item.posta, item.id);
-                });
-            }
-        }
-
-        function renderizarTarjeta(contenedor, imagenSrc, titulo, posta, hashMatematico) {
-            const tarjeta = document.createElement('div');
-            tarjeta.className = 'tarjeta-estampiya';
-            
-            tarjeta.innerHTML = `
-                <div>
-                    <div class="estampiya-frame">
-                        <img src="${imagenSrc}" alt="${titulo}" crossorigin="anonymous" onerror="this.onerror=null; this.parentElement.parentElement.parentElement.style.display='none';">
+                tarjeta.innerHTML = `
+                    <div>
+                        <div class="estampiya-frame">
+                            <img src="${item.archivo}" alt="${item.titulo}" crossorigin="anonymous">
+                        </div>
+                        <div class="info-estampa">
+                            <h3>${item.titulo}</h3>
+                            <div><strong>Posta:</strong> ${item.posta}</div>
+                            <div><strong>ID Hash:</strong> ${item.id}</div>
+                        </div>
                     </div>
-                    <div class="info-estampa">
-                        <h3>${titulo}</h3>
-                        <div><strong>Posta:</strong> ${posta}</div>
-                        <div><strong>ID Hash:</strong> ${hashMatematico}</div>
-                    </div>
-                </div>
-                <button class="btn-descarga-mdw">📥 DESCARGAR CON LÍNEA ATÓMICA</button>
-            `;
+                    <button class="btn-descarga-mdw">📥 DESCARGAR CON LÍNEA ATÓMICA</button>
+                `;
 
-            const btnDescarga = tarjeta.querySelector('.btn-descarga-mdw');
-            btnDescarga.addEventListener('click', () => {
-                descargarConSelloAtomico(imagenSrc, titulo, posta, hashMatematico);
+                const btnDescarga = tarjeta.querySelector('.btn-descarga-mdw');
+                btnDescarga.addEventListener('click', () => {
+                    descargarConSelloAtomico(item.archivo, item.titulo, item.posta, item.id);
+                });
+
+                contenedor.appendChild(tarjeta);
             });
-
-            contenedor.appendChild(tarjeta);
         }
 
         function descargarConSelloAtomico(urlImagen, titulo, posta, hashMatematico) {
@@ -246,11 +189,11 @@
             };
 
             img.onerror = () => {
-                alert("No se pudo cargar el archivo de imagen para estampar.");
+                alert("No se pudo cargar la imagen local.");
             };
         }
 
-        window.onload = cargarVidrieraCompleta;
+        window.onload = cargarVidriera;
     </script>
 </body>
 </html>

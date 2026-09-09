@@ -91,7 +91,7 @@
 
     <header>
         <h1>VENTANIYA 6</h1>
-        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Archivo visual y sello atómico de descarga.</p>
+        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Archivo visual y sello alfanumérico de descarga.</p>
     </header>
 
     <main id="vidriera-container" class="vidriera-grid">
@@ -101,10 +101,20 @@
     <canvas id="canvas-sello" style="display:none;"></canvas>
 
     <script>
+        // Generador de hash alfanumérico prolijo (letras y números mezclados)
+        function generarHashAlfanumerico() {
+            const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+            let hash = "v6-";
+            for (let i = 0; i < 6; i++) {
+                hash += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return hash;
+        }
+
         const piezasDefault = [
-            { id: "hash_aldea1_1122", titulo: "aldea1", archivo: "aldea1.png", posta: "1002" },
-            { id: "hash_estacion_3344", titulo: "estacion", archivo: "estacion.png", posta: "1002" },
-            { id: "hash_querandi_5566", titulo: "querandi", archivo: "querandi.png", posta: "1002" }
+            { id: generarHashAlfanumerico(), titulo: "aldea1", archivo: "aldea1.png", posta: "1002" },
+            { id: "v6-k9x2m4", titulo: "estacion", archivo: "estacion.png", posta: "1002" },
+            { id: "v6-7p4q9w", titulo: "querandi", archivo: "querandi.png", posta: "1002" }
         ];
 
         function cargarVidriera() {
@@ -115,6 +125,12 @@
             if (!piezasGuardadas) {
                 piezasGuardadas = piezasDefault;
                 localStorage.setItem('ventaniya_piezas', JSON.stringify(piezasDefault));
+            } else {
+                // Asegurar que cada pieza guardada tenga un ID alfanumérico válido
+                piezasGuardadas = piezasGuardadas.map(p => ({
+                    ...p,
+                    id: p.id && p.id.includes('-') ? p.id : generarHashAlfanumerico()
+                }));
             }
 
             if (piezasGuardadas.length === 0) {
@@ -137,7 +153,7 @@
                             <div><strong>ID Hash:</strong> ${item.id}</div>
                         </div>
                     </div>
-                    <button class="btn-descarga-mdw">📥 DESCARGAR CON SELLO REDONDO</button>
+                    <button class="btn-descarga-mdw">📥 DESCARGAR CON SELLO ALFANUMÉRICO</button>
                 `;
 
                 const btnDescarga = tarjeta.querySelector('.btn-descarga-mdw');
@@ -177,20 +193,20 @@
 
                 ctx.save();
 
-                // Sombra de los trazos del sello para que resalten sobre cualquier fondo
+                // Sombra de los trazos del sello
                 ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
                 ctx.shadowBlur = 8;
                 ctx.shadowOffsetX = 2;
                 ctx.shadowOffsetY = 2;
 
-                // Círculo exterior principal (Cian transparente / translúcido, SIN fondo negro)
+                // Círculo exterior principal (Cian translúcido)
                 ctx.beginPath();
                 ctx.arc(centroX, centroY, radioSello, 0, Math.PI * 2);
                 ctx.lineWidth = Math.max(3.5, radioSello * 0.07);
                 ctx.strokeStyle = "rgba(0, 255, 255, 0.85)";
                 ctx.stroke();
 
-                // Círculo interior concéntrico más fino
+                // Círculo interior concéntrico
                 ctx.beginPath();
                 ctx.arc(centroX, centroY, radioSello - 7, 0, Math.PI * 2);
                 ctx.lineWidth = 1.2;
@@ -199,7 +215,7 @@
 
                 ctx.restore();
 
-                // 3. Función auxiliar para texto con trazo y sombra (garantiza total legibilidad sin tapar la imagen)
+                // 3. Función auxiliar para texto nítido con sombra y trazo
                 function dibujarTextosello(texto, posX, posY, fontSize, colorTexto, esNegrita = false) {
                     ctx.save();
                     ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
@@ -211,10 +227,7 @@
                     ctx.textAlign = "center";
                     ctx.textBaseline = "middle";
 
-                    // Trazo negro exterior para contraste perfecto
                     ctx.strokeText(texto, posX, posY);
-
-                    // Color principal del texto (celestes/blancos brillantes)
                     ctx.fillStyle = colorTexto;
                     ctx.fillText(texto, posX, posY);
                     ctx.restore();
@@ -223,11 +236,11 @@
                 const fontGrande = Math.max(11, Math.floor(radioSello * 0.22));
                 const fontChico = Math.max(9, Math.floor(radioSello * 0.17));
 
-                // 4. Escribir los datos dentro del sello transparente
+                // 4. Escribir datos dentro del sello (incluyendo el hash alfanumérico limpio)
                 dibujarTextosello("VENTANIYA", centroX, centroY - radioSello * 0.38, fontGrande, "#ffffff", true);
                 dibujarTextosello(`POSTA ${posta}`, centroX, centroY - radioSello * 0.08, Math.floor(fontGrande * 1.15), "#00ffff", true);
                 dibujarTextosello(`TIME: ${tiempoStr}`, centroX, centroY + radioSello * 0.20, fontChico, "#d8f8ff", false);
-                dibujarTextosello(`ID: ${hashMatematico.substring(0, 8)}`, centroX, centroY + radioSello * 0.48, Math.floor(fontChico * 0.85), "#a5f3fc", false);
+                dibujarTextosello(`HASH: ${hashMatematico}`, centroX, centroY + radioSello * 0.48, Math.floor(fontChico * 0.82), "#a5f3fc", true);
 
                 // 5. Generar descarga automática
                 const enlaceFinal = document.createElement('a');

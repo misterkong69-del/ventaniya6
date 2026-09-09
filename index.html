@@ -101,20 +101,20 @@
     <canvas id="canvas-sello" style="display:none;"></canvas>
 
     <script>
-        // Generador de hash alfanumérico prolijo (letras y números mezclados)
-        function generarHashAlfanumerico() {
-            const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-            let hash = "v6-";
-            for (let i = 0; i < 6; i++) {
-                hash += chars.charAt(Math.floor(Math.random() * chars.length));
+        // Generador robusto de letras y números reales
+        function generarHashReal() {
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            let resultado = "v6-";
+            for (let i = 0; i < 5; i++) {
+                resultado += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            return hash;
+            return resultado;
         }
 
         const piezasDefault = [
-            { id: generarHashAlfanumerico(), titulo: "aldea1", archivo: "aldea1.png", posta: "1002" },
-            { id: "v6-k9x2m4", titulo: "estacion", archivo: "estacion.png", posta: "1002" },
-            { id: "v6-7p4q9w", titulo: "querandi", archivo: "querandi.png", posta: "1002" }
+            { id: generarHashReal(), titulo: "aldea1", archivo: "aldea1.png", posta: "1002" },
+            { id: generarHashReal(), titulo: "estacion", archivo: "estacion.png", posta: "1002" },
+            { id: generarHashReal(), titulo: "querandi", archivo: "querandi.png", posta: "1002" }
         ];
 
         function cargarVidriera() {
@@ -122,20 +122,14 @@
             contenedor.innerHTML = "";
 
             let piezasGuardadas = JSON.parse(localStorage.getItem('ventaniya_piezas') || 'null');
-            if (!piezasGuardadas) {
-                piezasGuardadas = piezasDefault;
-                localStorage.setItem('ventaniya_piezas', JSON.stringify(piezasDefault));
-            } else {
-                // Asegurar que cada pieza guardada tenga un ID alfanumérico válido
-                piezasGuardadas = piezasGuardadas.map(p => ({
+            
+            // Si no hay o tienen IDs viejos/feos, los regeneramos con formato alfanumérico limpio
+            if (!piezasGuardadas || piezasGuardadas.some(p => !p.id || p.id.includes('hash_'))) {
+                piezasGuardadas = piezasDefault.map(p => ({
                     ...p,
-                    id: p.id && p.id.includes('-') ? p.id : generarHashAlfanumerico()
+                    id: generarHashReal()
                 }));
-            }
-
-            if (piezasGuardadas.length === 0) {
-                contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #00ffff; padding: 40px;">No hay piezas cargadas.</div>`;
-                return;
+                localStorage.setItem('ventaniya_piezas', JSON.stringify(piezasGuardadas));
             }
 
             piezasGuardadas.forEach(item => {
@@ -177,7 +171,6 @@
                 canvas.width = img.naturalWidth;
                 canvas.height = img.naturalHeight;
 
-                // 1. Dibujar imagen original intacta
                 ctx.drawImage(img, 0, 0);
 
                 const ahora = new Date();
@@ -186,36 +179,31 @@
                 const segundos = String(ahora.getSeconds()).padStart(2, '0');
                 const tiempoStr = `${horas}:${minutos}:${segundos}`;
 
-                // 2. Coordenadas y tamaño del sello redondo (abajo a la derecha)
                 const radioSello = Math.max(75, Math.floor(canvas.width * 0.13));
                 const centroX = canvas.width - radioSello - 45;
                 const centroY = canvas.height - radioSello - 45;
 
                 ctx.save();
-
-                // Sombra de los trazos del sello
                 ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
                 ctx.shadowBlur = 8;
                 ctx.shadowOffsetX = 2;
                 ctx.shadowOffsetY = 2;
 
-                // Círculo exterior principal (Cian translúcido)
+                // Círculo exterior cian translúcido
                 ctx.beginPath();
                 ctx.arc(centroX, centroY, radioSello, 0, Math.PI * 2);
                 ctx.lineWidth = Math.max(3.5, radioSello * 0.07);
                 ctx.strokeStyle = "rgba(0, 255, 255, 0.85)";
                 ctx.stroke();
 
-                // Círculo interior concéntrico
+                // Círculo interior
                 ctx.beginPath();
                 ctx.arc(centroX, centroY, radioSello - 7, 0, Math.PI * 2);
                 ctx.lineWidth = 1.2;
                 ctx.strokeStyle = "rgba(0, 139, 139, 0.85)";
                 ctx.stroke();
-
                 ctx.restore();
 
-                // 3. Función auxiliar para texto nítido con sombra y trazo
                 function dibujarTextosello(texto, posX, posY, fontSize, colorTexto, esNegrita = false) {
                     ctx.save();
                     ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
@@ -236,13 +224,12 @@
                 const fontGrande = Math.max(11, Math.floor(radioSello * 0.22));
                 const fontChico = Math.max(9, Math.floor(radioSello * 0.17));
 
-                // 4. Escribir datos dentro del sello (incluyendo el hash alfanumérico limpio)
+                // Imprimir datos limpios con el hash alfanumérico real
                 dibujarTextosello("VENTANIYA", centroX, centroY - radioSello * 0.38, fontGrande, "#ffffff", true);
                 dibujarTextosello(`POSTA ${posta}`, centroX, centroY - radioSello * 0.08, Math.floor(fontGrande * 1.15), "#00ffff", true);
                 dibujarTextosello(`TIME: ${tiempoStr}`, centroX, centroY + radioSello * 0.20, fontChico, "#d8f8ff", false);
-                dibujarTextosello(`HASH: ${hashMatematico}`, centroX, centroY + radioSello * 0.48, Math.floor(fontChico * 0.82), "#a5f3fc", true);
+                dibujarTextosello(`ID: ${hashMatematico}`, centroX, centroY + radioSello * 0.48, Math.floor(fontChico * 0.82), "#a5f3fc", true);
 
-                // 5. Generar descarga automática
                 const enlaceFinal = document.createElement('a');
                 enlaceFinal.download = `${titulo.toLowerCase().replace(/\s+/g, '_')}_ventaniya1002.jpg`;
                 enlaceFinal.href = canvas.toDataURL('image/jpeg', 0.95);
@@ -250,7 +237,7 @@
             };
 
             img.onerror = () => {
-                alert("No se pudo cargar la imagen para estampar. Comprobá que el archivo exista.");
+                alert("No se pudo cargar la imagen para estampar.");
             };
         }
 

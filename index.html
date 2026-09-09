@@ -89,17 +89,17 @@
 <body>
 
     <header>
-        <h1>VIDRIERA DE ESTAMPIYAS</h1>
-        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Explorá el archivo visual y descargá con sello atómico.</p>
+        <h1>VENTANIYA 6</h1>
+        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Archivo visual y sello atómico de descarga.</p>
     </header>
 
     <main id="vidriera-container" class="vidriera-grid">
         <div style="grid-column: 1 / -1; text-align: center; color: #00ffff; padding: 40px;">
-            Cargando la vidriera...
+            Cargando archivo...
         </div>
     </main>
 
-    <!-- Canvas oculto para procesar el sello atómico -->
+    <!-- Canvas oculto para procesar el sello -->
     <canvas id="canvas-sello" style="display:none;"></canvas>
 
     <script type="module">
@@ -119,14 +119,11 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Función inteligente para limpiar rutas y asegurar que cargue los archivos locales del repo
         function limpiarRutaImagen(url) {
             if (!url) return '';
-            // Si guardaste el link completo de github, extraemos solo el nombre del archivo final
             if (url.includes('github.com') || url.includes('raw.githubusercontent.com')) {
                 const partes = url.split('/');
-                const nombreArchivo = partes[partes.length - 1].split('?')[0]; // Remueve parámetros extra
-                return nombreArchivo; // Devuelve solo "querandi.png", "estacion.png", etc.
+                return partes[partes.length - 1].split('?')[0];
             }
             return url;
         }
@@ -136,21 +133,25 @@
             try {
                 const querySnapshot = await getDocs(collection(db, "estampiyas_mdw"));
                 
+                contenedor.innerHTML = "";
+
                 if (querySnapshot.empty) {
-                    contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b; padding: 40px;">No hay registros en la base.</div>`;
+                    contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #00ffff; padding: 40px;">No hay registros activos.</div>`;
                     return;
                 }
-
-                contenedor.innerHTML = "";
 
                 querySnapshot.forEach((docSnap) => {
                     const data = docSnap.data();
                     let rutaCruda = data.imagen_url || data.stamp_url || '';
                     let imagenSrc = limpiarRutaImagen(rutaCruda);
                     
-                    const titulo = data.titulo || 'Estampa';
+                    // Ocultamos registros fantasmas que no tengan imagen real o archivo local asociado
+                    if (!imagenSrc) return;
+
+                    const titulo = data.titulo || 'Pieza';
                     const posta = data.id_posta || '1002';
-                    const hash = data.hash_base || 'MDW-2026';
+                    // Usamos el ID matemático real del documento de Firestore como hash puro
+                    const hashMatematico = docSnap.id;
                     
                     const tarjeta = document.createElement('div');
                     tarjeta.className = 'tarjeta-estampiya';
@@ -163,15 +164,15 @@
                             <div class="info-estampa">
                                 <h3>${titulo}</h3>
                                 <div><strong>Posta:</strong> ${posta}</div>
-                                <div><strong>Hash:</strong> ${hash}</div>
+                                <div><strong>ID Hash:</strong> ${hashMatematico}</div>
                             </div>
                         </div>
-                        <button class="btn-descarga-mdw">📥 DESCARGAR CON SELLO ATÓMICO</button>
+                        <button class="btn-descarga-mdw">📥 DESCARGAR CON LÍNEA ATÓMICA</button>
                     `;
 
                     const btnDescarga = tarjeta.querySelector('.btn-descarga-mdw');
                     btnDescarga.addEventListener('click', () => {
-                        descargarConSelloAtomico(imagenSrc, titulo, posta, hash);
+                        descargarConSelloAtomico(imagenSrc, titulo, posta, hashMatematico);
                     });
 
                     contenedor.appendChild(tarjeta);
@@ -179,11 +180,11 @@
 
             } catch (error) {
                 console.error("Error:", error);
-                contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b;">Error al cargar los elementos.</div>`;
+                contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b;">Error al sincronizar el archivo.</div>`;
             }
         }
 
-        function descargarConSelloAtomico(urlImagen, titulo, posta, hash) {
+        function descargarConSelloAtomico(urlImagen, titulo, posta, hashMatematico) {
             const img = new Image();
             img.crossOrigin = "anonymous";
             img.src = urlImagen;
@@ -195,8 +196,10 @@
                 canvas.width = img.naturalWidth;
                 canvas.height = img.naturalHeight;
 
+                // Dibuja la imagen original limpia
                 ctx.drawImage(img, 0, 0);
 
+                // Obtener hora exacta en formato 24hs con milisegundos
                 const ahora = new Date();
                 const horas = String(ahora.getHours()).padStart(2, '0');
                 const minutos = String(ahora.getMinutes()).padStart(2, '0');
@@ -204,36 +207,38 @@
                 const milisegundos = String(ahora.getMilliseconds()).padStart(3, '0');
                 const tiempoAtomico = `${horas}:${minutos}:${segundos}.${milisegundos}`;
 
-                const padding = Math.max(20, canvas.width * 0.03);
-                const rectWidth = canvas.width * 0.44;
-                const rectHeight = canvas.height * 0.16;
-                const x = canvas.width - rectWidth - padding;
-                const y = canvas.height - rectHeight - padding;
-
-                ctx.fillStyle = "rgba(11, 19, 26, 0.9)";
-                ctx.fillRect(x, y, rectWidth, rectHeight);
-                ctx.strokeStyle = "#00ffff";
-                ctx.lineWidth = Math.max(2, canvas.width * 0.004);
-                ctx.strokeRect(x, y, rectWidth, rectHeight);
-
-                ctx.fillStyle = "#00ffff";
-                ctx.font = `bold ${Math.max(12, canvas.width * 0.022)}px 'Courier New', monospace`;
-                ctx.fillText(`VENTANITA - POSTA ${posta}`, x + padding, y + (rectHeight * 0.30));
+                // Configuración de la línea de tiempo atómica grande e impecable (sin recuadro cuadrado)
+                const fontSize = Math.max(16, Math.floor(canvas.width * 0.028));
+                ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
                 
-                ctx.font = `${Math.max(11, canvas.width * 0.020)}px 'Courier New', monospace`;
-                ctx.fillText(`TIME: ${tiempoAtomico}`, x + padding, y + (rectHeight * 0.60));
+                const textoLinea = `[ ventaniya 1002 ]  |  TIME: ${tiempoAtomico}  |  HASH: ${hashMatematico}  |  POSTA: ${posta}`;
+                
+                const paddingX = 30;
+                const paddingY = 40;
+                const x = paddingX;
+                const y = canvas.height - paddingY;
 
-                ctx.font = `${Math.max(10, canvas.width * 0.017)}px 'Courier New', monospace`;
-                ctx.fillText(`HASH: ${hash}`, x + padding, y + (rectHeight * 0.85));
+                // Sombra sutil para lectura perfecta sobre cualquier fondo de imagen
+                ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+                ctx.shadowBlur = 6;
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
+                ctx.strokeText(textoLinea, x, y);
 
+                // Texto principal en cian brillante atómico
+                ctx.fillStyle = "#00ffff";
+                ctx.shadowBlur = 0;
+                ctx.fillText(textoLinea, x, y);
+
+                // Descarga automática
                 const enlaceFinal = document.createElement('a');
-                enlaceFinal.download = `${titulo.toLowerCase().replace(/\s+/g, '_')}_atomica.jpg`;
+                enlaceFinal.download = `${titulo.toLowerCase().replace(/\s+/g, '_')}_ventaniya1002.jpg`;
                 enlaceFinal.href = canvas.toDataURL('image/jpeg', 0.95);
                 enlaceFinal.click();
             };
 
             img.onerror = () => {
-                alert("No se pudo cargar la imagen local para estampar.");
+                alert("No se pudo cargar el archivo de imagen local.");
             };
         }
 

@@ -94,46 +94,82 @@
     </header>
 
     <main id="vidriera-container" class="vidriera-grid">
-        <!-- Renderizado directo de archivos locales -->
+        <div style="grid-column: 1 / -1; text-align: center; color: #00ffff; padding: 40px;">
+            Sincronizando con la base de datos...
+        </div>
     </main>
 
     <canvas id="canvas-sello" style="display:none;"></canvas>
 
-    <script>
-        const piezasLocales = [
-            { id: "hash_querandi_9821", titulo: "querandi", archivo: "querandi.png", posta: "1002" },
-            { id: "hash_estacion_4452", titulo: "estacion", archivo: "estacion.png", posta: "1002" }
-        ];
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        function cargarVidriera() {
+        const firebaseConfig = {
+            apiKey: "AIzaSyDnLtvnb5IW1X-HbuC3uC0Dcf6BaojmndE",
+            authDomain: "mardelasmaravillas1.firebaseapp.com",
+            projectId: "mardelasmaravillas1",
+            storageBucket: "mardelasmaravillas1.firebasestorage.app",
+            messagingSenderId: "1041475872464",
+            appId: "1:1041475872464:web:87d00298ea219bdb4aa0d5",
+            measurementId: "G-F87RCG37BW"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        async function cargarVidrieraDesdeFirebase() {
             const contenedor = document.getElementById('vidriera-container');
-            contenedor.innerHTML = "";
-
-            piezasLocales.forEach(item => {
-                const tarjeta = document.createElement('div');
-                tarjeta.className = 'tarjeta-estampiya';
+            try {
+                // Lee exactamente de la colección nueva que usa tu panel de administración
+                const querySnapshot = await getDocs(collection(db, "estampas_nuevas"));
                 
-                tarjeta.innerHTML = `
-                    <div>
-                        <div class="estampiya-frame">
-                            <img src="${item.archivo}" alt="${item.titulo}" crossorigin="anonymous">
-                        </div>
-                        <div class="info-estampa">
-                            <h3>${item.titulo}</h3>
-                            <div><strong>Posta:</strong> ${item.posta}</div>
-                            <div><strong>ID Hash:</strong> ${item.id}</div>
-                        </div>
-                    </div>
-                    <button class="btn-descarga-mdw">📥 DESCARGAR CON LÍNEA ATÓMICA</button>
-                `;
+                contenedor.innerHTML = "";
 
-                const btnDescarga = tarjeta.querySelector('.btn-descarga-mdw');
-                btnDescarga.addEventListener('click', () => {
-                    descargarConSelloAtomico(item.archivo, item.titulo, item.posta, item.id);
+                if (querySnapshot.empty) {
+                    contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #00ffff; padding: 40px;">No hay estampas cargadas en la base todavía. Usá el panel para agregar la primera.</div>`;
+                    return;
+                }
+
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const imagenSrc = data.imagen_url || data.stamp_url || '';
+                    
+                    if (!imagenSrc) return;
+
+                    const titulo = data.titulo || 'Pieza';
+                    const posta = data.id_posta || '1002';
+                    const hashMatematico = docSnap.id; // ID único real de Firestore
+                    
+                    const tarjeta = document.createElement('div');
+                    tarjeta.className = 'tarjeta-estampiya';
+                    
+                    tarjeta.innerHTML = `
+                        <div>
+                            <div class="estampiya-frame">
+                                <img src="${imagenSrc}" alt="${titulo}" crossorigin="anonymous">
+                            </div>
+                            <div class="info-estampa">
+                                <h3>${titulo}</h3>
+                                <div><strong>Posta:</strong> ${posta}</div>
+                                <div><strong>ID Hash:</strong> ${hashMatematico}</div>
+                            </div>
+                        </div>
+                        <button class="btn-descarga-mdw">📥 DESCARGAR CON LÍNEA ATÓMICA</button>
+                    `;
+
+                    const btnDescarga = tarjeta.querySelector('.btn-descarga-mdw');
+                    btnDescarga.addEventListener('click', () => {
+                        descargarConSelloAtomico(imagenSrc, titulo, posta, hashMatematico);
+                    });
+
+                    contenedor.appendChild(tarjeta);
                 });
 
-                contenedor.appendChild(tarjeta);
-            });
+            } catch (error) {
+                console.error("Error al conectar con la base de datos:", error);
+                contenedor.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; color: #ff6b6b;">Error al sincronizar con la base de datos.</div>`;
+            }
         }
 
         function descargarConSelloAtomico(urlImagen, titulo, posta, hashMatematico) {
@@ -157,6 +193,7 @@
                 const milisegundos = String(ahora.getMilliseconds()).padStart(3, '0');
                 const tiempoAtomico = `${horas}:${minutos}:${segundos}.${milisegundos}`;
 
+                // Sello atómico limpio en DOS LÍNEAS
                 const fontSize = Math.max(14, Math.floor(canvas.width * 0.024));
                 ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
 
@@ -189,11 +226,12 @@
             };
 
             img.onerror = () => {
-                alert("No se pudo cargar la imagen local.");
+                alert("No se pudo cargar la imagen remota para estampar. Verificá que la URL directa sea accesible.");
             };
         }
 
-        window.onload = cargarVidriera;
+        window.onload = cargarVidrieraFromFirebase; // corregido el nombre de ejecución
+        window.onload = cargarVidrieraDesdeFirebase;
     </script>
 </body>
 </html>

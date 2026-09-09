@@ -113,13 +113,10 @@
     <canvas id="canvas-sello" style="display:none;"></canvas>
 
     <script>
-        // Detecta automáticamente el usuario y repositorio desde la URL actual de GitHub Pages
         const pathArray = window.location.pathname.split('/');
         const userOrOrg = window.location.hostname.split('.')[0]; 
-        // Si estás en github.io, el repo suele ser el primer segmento del path o se extrae dinámicamente:
         const repoName = window.location.hostname.includes('github.io') ? pathArray[1] : '';
         
-        // Función para limpiar el nombre del archivo y que quede lindo como título
         function formatearTitulo(nombreArchivo) {
             let sinExtension = nombreArchivo.substring(0, nombreArchivo.lastIndexOf('.')) || nombreArchivo;
             let limpio = sinExtension.replace(/[-_]/g, ' ');
@@ -130,18 +127,19 @@
             const contenedor = document.getElementById('vidriera-container');
             
             try {
-                // Consultamos la API pública de GitHub para listar los archivos del repositorio
                 let apiUrl = `https://api.github.com/repos/misterkong69-del/misterkong69-del.github.io/contents/`;
                 if (window.location.hostname.includes('github.io') && repoName && repoName !== '') {
                     apiUrl = `https://api.github.com/repos/${userOrOrg}/${repoName}/contents/`;
                 }
+
+                // Agregamos un parámetro ?t=... para forzar a GitHub a que entregue datos frescos sin caché
+                apiUrl += `?t=${new Date().getTime()}`;
 
                 const respuesta = await fetch(apiUrl);
                 if (!respuesta.ok) throw new Error("No se pudo conectar con el repositorio.");
                 
                 const archivos = await respuesta.json();
                 
-                // Filtramos solo los archivos que sean imágenes (jpg, jpeg, png, webp)
                 const imagenes = archivos.filter(item => {
                     if (item.type !== 'file') return false;
                     const ext = item.name.split('.').pop().toLowerCase();
@@ -155,17 +153,20 @@
 
                 contenedor.innerHTML = "";
 
-                imagenes.forEach((imgData, index) => {
+                imagenes.forEach((imgData) => {
                     const tituloLindo = formatearTitulo(imgData.name);
                     const hashAleatorio = "MDW-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-2026";
                     
                     const tarjeta = document.createElement('div');
                     tarjeta.className = 'tarjeta-estampiya';
                     
+                    // A la URL de la imagen también le agregamos un parámetro de versión para que el navegador no cargue la foto vieja guardada
+                    const urlImagenFresca = `${imgData.name}?v=${Math.random()}`;
+
                     tarjeta.innerHTML = `
                         <div>
                             <div class="estampiya-frame">
-                                <img src="${imgData.name}" alt="${tituloLindo}" crossorigin="anonymous" class="img-estampa-ref">
+                                <img src="${urlImagenFresca}" alt="${tituloLindo}" crossorigin="anonymous" class="img-estampa-ref">
                             </div>
                             <div class="info-estampa">
                                 <h3>${tituloLindo}</h3>

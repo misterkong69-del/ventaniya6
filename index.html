@@ -95,11 +95,10 @@
 
     <main id="vidriera-container" class="vidriera-grid">
         <div style="grid-column: 1 / -1; text-align: center; color: #00ffff; padding: 40px;">
-            Cargando archivo...
+            Cargando archivo limpio...
         </div>
     </main>
 
-    <!-- Canvas oculto para procesar el sello -->
     <canvas id="canvas-sello" style="display:none;"></canvas>
 
     <script type="module">
@@ -140,17 +139,24 @@
                     return;
                 }
 
-                querySnapshot.forEach((docSnap) => {
+                // Verificamos y filtramos para mostrar únicamente las que tienen archivo real cargado
+                for (const docSnap of querySnapshot.docs) {
                     const data = docSnap.data();
                     let rutaCruda = data.imagen_url || data.stamp_url || '';
                     let imagenSrc = limpiarRutaImagen(rutaCruda);
                     
-                    // Ocultamos registros fantasmas que no tengan imagen real o archivo local asociado
-                    if (!imagenSrc) return;
+                    if (!imagenSrc) continue;
+
+                    // Validamos mediante fetch que el archivo exista físicamente en el repositorio actual antes de pintarlo
+                    try {
+                        const testResponse = await fetch(imagenSrc, { method: 'HEAD' });
+                        if (!testResponse.ok) continue; // Si no existe en este repo, se salta y no deja el fantasma
+                    } catch (e) {
+                        continue;
+                    }
 
                     const titulo = data.titulo || 'Pieza';
                     const posta = data.id_posta || '1002';
-                    // Usamos el ID matemático real del documento de Firestore como hash puro
                     const hashMatematico = docSnap.id;
                     
                     const tarjeta = document.createElement('div');
@@ -176,7 +182,7 @@
                     });
 
                     contenedor.appendChild(tarjeta);
-                });
+                }
 
             } catch (error) {
                 console.error("Error:", error);
@@ -196,10 +202,8 @@
                 canvas.width = img.naturalWidth;
                 canvas.height = img.naturalHeight;
 
-                // Dibuja la imagen original limpia
                 ctx.drawImage(img, 0, 0);
 
-                // Obtener hora exacta en formato 24hs con milisegundos
                 const ahora = new Date();
                 const horas = String(ahora.getHours()).padStart(2, '0');
                 const minutos = String(ahora.getMinutes()).padStart(2, '0');
@@ -207,30 +211,34 @@
                 const milisegundos = String(ahora.getMilliseconds()).padStart(3, '0');
                 const tiempoAtomico = `${horas}:${minutos}:${segundos}.${milisegundos}`;
 
-                // Configuración de la línea de tiempo atómica grande e impecable (sin recuadro cuadrado)
-                const fontSize = Math.max(16, Math.floor(canvas.width * 0.028));
+                // Configuración de texto en DOS LÍNEAS para que no se corte jamás
+                const fontSize = Math.max(14, Math.floor(canvas.width * 0.024));
                 ctx.font = `bold ${fontSize}px 'Courier New', monospace`;
-                
-                const textoLinea = `[ ventaniya 1002 ]  |  TIME: ${tiempoAtomico}  |  HASH: ${hashMatematico}  |  POSTA: ${posta}`;
-                
+
+                const linea1 = `[ ventaniya 1002 ] — POSTA: ${posta}`;
+                const linea2 = `TIME: ${tiempoAtomico} | HASH: ${hashMatematico}`;
+
                 const paddingX = 30;
-                const paddingY = 40;
+                const baseY = canvas.height - 70;
                 const x = paddingX;
-                const y = canvas.height - paddingY;
 
-                // Sombra sutil para lectura perfecta sobre cualquier fondo de imagen
-                ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-                ctx.shadowBlur = 6;
-                ctx.lineWidth = 4;
-                ctx.strokeStyle = "rgba(0, 0, 0, 0.8)";
-                ctx.strokeText(textoLinea, x, y);
+                // Sombra y trazo para legibilidad absoluta sobre cualquier fondo
+                function dibujarTextoConSombra(texto, posX, posY) {
+                    ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
+                    ctx.shadowBlur = 6;
+                    ctx.lineWidth = 4;
+                    ctx.strokeStyle = "rgba(0, 0, 0, 0.9)";
+                    ctx.strokeText(texto, posX, posY);
 
-                // Texto principal en cian brillante atómico
-                ctx.fillStyle = "#00ffff";
-                ctx.shadowBlur = 0;
-                ctx.fillText(textoLinea, x, y);
+                    ctx.fillStyle = "#00ffff";
+                    ctx.shadowBlur = 0;
+                    ctx.fillText(texto, posX, posY);
+                }
 
-                // Descarga automática
+                // Dibujar Línea 1 y Línea 2 escalonadas
+                dibujarTextoConSombra(linea1, x, baseY);
+                dibujarTextoConSombra(linea2, x, baseY + fontSize + 8);
+
                 const enlaceFinal = document.createElement('a');
                 enlaceFinal.download = `${titulo.toLowerCase().replace(/\s+/g, '_')}_ventaniya1002.jpg`;
                 enlaceFinal.href = canvas.toDataURL('image/jpeg', 0.95);

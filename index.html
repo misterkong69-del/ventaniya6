@@ -113,10 +113,6 @@
     <canvas id="canvas-sello" style="display:none;"></canvas>
 
     <script>
-        const pathArray = window.location.pathname.split('/');
-        const userOrOrg = window.location.hostname.split('.')[0]; 
-        const repoName = window.location.hostname.includes('github.io') ? pathArray[1] : '';
-        
         function formatearTitulo(nombreArchivo) {
             let sinExtension = nombreArchivo.substring(0, nombreArchivo.lastIndexOf('.')) || nombreArchivo;
             let limpio = sinExtension.replace(/[-_]/g, ' ');
@@ -127,12 +123,22 @@
             const contenedor = document.getElementById('vidriera-container');
             
             try {
-                let apiUrl = `https://api.github.com/repos/misterkong69-del/misterkong69-del.github.io/contents/`;
-                if (window.location.hostname.includes('github.io') && repoName && repoName !== '') {
+                // Detección automática universal para cualquier repositorio de GitHub Pages
+                const hostname = window.location.hostname; // ej: misterkong69-del.github.io
+                const pathArray = window.location.pathname.split('/').filter(Boolean);
+                
+                let userOrOrg = hostname.split('.')[0];
+                let repoName = pathArray.length > 0 ? pathArray[0] : hostname;
+
+                // Si estás probando localmente en tu compu (localhost o archivo), usamos un respaldo directo
+                let apiUrl;
+                if (hostname.includes('github.io')) {
                     apiUrl = `https://api.github.com/repos/${userOrOrg}/${repoName}/contents/`;
+                } else {
+                    // Respaldo por si abrís el archivo directo en local
+                    apiUrl = `https://api.github.com/repos/misterkong69-del/misterkong69-del.github.io/contents/`;
                 }
 
-                // Agregamos un parámetro ?t=... para forzar a GitHub a que entregue datos frescos sin caché
                 apiUrl += `?t=${new Date().getTime()}`;
 
                 const respuesta = await fetch(apiUrl);
@@ -147,7 +153,7 @@
                 });
 
                 if (imagenes.length === 0) {
-                    contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #ff5555; padding: 40px;">⚠️ No se encontraron imágenes en el repositorio.</div>';
+                    contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #ff5555; padding: 40px;">⚠️ No se encontraron imágenes en este repositorio.</div>';
                     return;
                 }
 
@@ -155,12 +161,11 @@
 
                 imagenes.forEach((imgData) => {
                     const tituloLindo = formatearTitulo(imgData.name);
-                    const hashAleatorio = "MDW-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-2026";
+                    const hashAleatorio = "MDW-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-1890";
                     
                     const tarjeta = document.createElement('div');
                     tarjeta.className = 'tarjeta-estampiya';
                     
-                    // A la URL de la imagen también le agregamos un parámetro de versión para que el navegador no cargue la foto vieja guardada
                     const urlImagenFresca = `${imgData.name}?v=${Math.random()}`;
 
                     tarjeta.innerHTML = `
@@ -183,7 +188,7 @@
 
             } catch (error) {
                 console.error(error);
-                contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #ff5555; padding: 40px;">⚠️ Error al cargar las imágenes automáticamente. Verificá la conexión.</div>';
+                contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #ff5555; padding: 40px;">⚠️ Error al cargar las imágenes automáticamente. Verificá la conexión o que el repositorio sea público.</div>';
             }
         }
 

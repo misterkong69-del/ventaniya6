@@ -101,60 +101,83 @@
     <header>
         <div class="tag">POSTA DEL MILISEGUNDO — MDW 1001</div>
         <h1>VIDRIERA DE ESTAMPIYA DE TIEMPO</h1>
-        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Explorá el archivo visual y descargá cada pieza con certificación atómica.</p>
+        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Escaneo automático del archivo visual de Mardelwood.</p>
     </header>
 
-    <main class="vidriera-grid">
-
-        <!-- TARJETA 1: Reemplazá 'imagen1.jpg' por el nombre real de tu archivo en el repo -->
-        <div class="tarjeta-estampiya">
-            <div>
-                <div class="estampiya-frame">
-                    <img src="imagen1.jpg" alt="Aviso Mardelwood 1" crossorigin="anonymous" class="img-estampa-ref">
-                </div>
-                <div class="info-estampa">
-                    <h3>Aviso Clandestino 01</h3>
-                    <div><strong>Posta:</strong> 1001 (MDW)</div>
-                    <div><strong>Hash Base:</strong> MDW-X991-1890</div>
-                </div>
-            </div>
-            <button class="btn-descarga-mdw" onclick="descargarEstampiyaDeVidriera(this)">
-                📥 VER Y DESCARGAR CON MS
-            </button>
+    <main id="vidriera-container" class="vidriera-grid">
+        <div style="grid-column: 1 / -1; text-align: center; color: #00ffff; padding: 40px;">
+            Buscando piezas en el repositorio...
         </div>
-
-        <!-- TARJETA 2: Duplicá este bloque hacia abajo si querés agregar más imágenes -->
-        <div class="tarjeta-estampiya">
-            <div>
-                <div class="estampiya-frame">
-                    <img src="imagen2.jpg" alt="Aviso Mardelwood 2" crossorigin="anonymous" class="img-estampa-ref">
-                </div>
-                <div class="info-estampa">
-                    <h3>Aviso Clandestino 02</h3>
-                    <div><strong>Posta:</strong> 1001 (MDW)</div>
-                    <div><strong>Hash Base:</strong> MDW-B442-1890</div>
-                </div>
-            </div>
-            <button class="btn-descarga-mdw" onclick="descargarEstampiyaDeVidriera(this)">
-                📥 VER Y DESCARGAR CON MS
-            </button>
-        </div>
-
     </main>
 
     <canvas id="canvas-sello" style="display:none;"></canvas>
 
     <script>
-        let geoUbicacionTexto = "MDW-GEO: 38.0000° S, 57.5500° W [MARDELWOOD]";
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    geoUbicacionTexto = `GEO: ${position.coords.latitude.toFixed(4)}° S, ${position.coords.longitude.toFixed(4)}° W [MDW]`;
-                },
-                (error) => {
-                    console.log("Usando coordenadas base de Mardelwood.");
+        function formatearTitulo(nombreArchivo) {
+            let sinExtension = nombreArchivo.substring(0, nombreArchivo.lastIndexOf('.')) || nombreArchivo;
+            let limpio = sinExtension.replace(/[-_]/g, ' ');
+            return limpio.charAt(0).toUpperCase() + limpio.slice(1);
+        }
+
+        async function cargarVidrieraAutomatica() {
+            const contenedor = document.getElementById('vidriera-container');
+            
+            try {
+                const hostname = window.location.hostname; 
+                const pathArray = window.location.pathname.split('/').filter(Boolean);
+                
+                let userOrOrg = hostname.split('.')[0];
+                let repoName = pathArray.length > 0 ? pathArray[0] : hostname;
+
+                let apiUrl = `https://api.github.com/repos/${userOrOrg}/${repoName}/contents/?t=${new Date().getTime()}`;
+
+                const respuesta = await fetch(apiUrl);
+                if (!respuesta.ok) throw new Error("No se pudo conectar con la API del repositorio.");
+                
+                const archivos = await respuesta.json();
+                
+                const imagenes = archivos.filter(item => {
+                    if (item.type !== 'file') return false;
+                    const ext = item.name.split('.').pop().toLowerCase();
+                    return ['png', 'jpg', 'jpeg', 'webp'].includes(ext);
+                });
+
+                if (imagenes.length === 0) {
+                    contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #ff5555; padding: 40px;">⚠️ No se encontraron imágenes en la raíz de este repositorio.</div>';
+                    return;
                 }
-            );
+
+                contenedor.innerHTML = "";
+
+                imagenes.forEach((imgData) => {
+                    const tituloLindo = formatearTitulo(imgData.name);
+                    const hashAleatorio = "MDW-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-1890";
+                    
+                    const tarjeta = document.createElement('div');
+                    tarjeta.className = 'tarjeta-estampiya';
+                    
+                    tarjeta.innerHTML = `
+                        <div>
+                            <div class="estampiya-frame">
+                                <img src="${imgData.name}" alt="${tituloLindo}" crossorigin="anonymous" class="img-estampa-ref">
+                            </div>
+                            <div class="info-estampa">
+                                <h3>${tituloLindo}</h3>
+                                <div><strong>Posta:</strong> 1001 (MDW)</div>
+                                <div><strong>Hash Base:</strong> ${hashAleatorio}</div>
+                            </div>
+                        </div>
+                        <button class="btn-descarga-mdw" onclick="descargarEstampiyaDeVidriera(this)">
+                            📥 VER Y DESCARGAR CON MS
+                        </button>
+                    `;
+                    contenedor.appendChild(tarjeta);
+                });
+
+            } catch (error) {
+                console.error(error);
+                contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #ff5555; padding: 40px;">⚠️ Error al cargar las imágenes. Verificá que el repositorio sea público.</div>';
+            }
         }
 
         function descargarEstampiyaDeVidriera(btn) {
@@ -169,18 +192,19 @@
             try {
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             } catch (e) {
-                alert("Error de seguridad (CORS). Comprobá que la imagen esté en el mismo repositorio.");
+                alert("Error de seguridad al procesar la imagen.");
                 return;
             }
 
             const ahora = new Date();
-            const anioFijo = "1890"; 
+            const anioFijo = "1890";
             const fStr = `${String(ahora.getDate()).padStart(2, '0')}/${String(ahora.getMonth() + 1).padStart(2, '0')}/${anioFijo}`;
             const hStr = String(ahora.getHours()).padStart(2, '0');
             const mStr = String(ahora.getMinutes()).padStart(2, '0');
             const sStr = String(ahora.getSeconds()).padStart(2, '0');
             const msStr = String(ahora.getMilliseconds()).padStart(3, '0');
-            const hashSello = "HASH-ID: MDW-" + Math.random().toString(36).substring(2, 10).toUpperCase() + "-1001";
+            const timestampCompleto = `${fStr} ${hStr}:${mStr}:${sStr}.${msStr}`;
+            const hashSello = "MDW-" + Math.random().toString(36).substring(2, 10).toUpperCase() + "-1001";
 
             const escala = canvas.width / 1200;
 
@@ -199,19 +223,19 @@
 
             ctx.fillStyle = "#ffffff";
             ctx.font = `700 ${Math.round(26 * escala)}px 'Orbitron', sans-serif`;
-            ctx.fillText(`FECHA: ${fStr} — MARDELWOOD (MDW)`, posXLinea, posYLinea + 40 * escala);
+            ctx.fillText(`FECHA: ${timestampCompleto} — MARDELWOOD`, posXLinea, posYLinea + 40 * escala);
 
-            // 2. HASH ID Y GEOLOCALIZACIÓN ABAJO A LA IZQUIERDA
+            // 2. HASH ID ABAJO A LA IZQUIERDA
             ctx.shadowColor = "rgba(0, 255, 255, 0.7)";
             ctx.shadowBlur = 8 * escala;
 
             ctx.fillStyle = "#00ffff";
             ctx.font = `bold ${Math.round(24 * escala)}px 'Courier New', monospace`;
-            ctx.fillText(hashSello, posXLinea, canvas.height - (75 * escala));
+            ctx.fillText(`HASH-ID: ${hashSello}`, posXLinea, canvas.height - (75 * escala));
             
             ctx.fillStyle = "#a5f3fc";
             ctx.font = `bold ${Math.round(20 * escala)}px 'Courier New', monospace`;
-            ctx.fillText(geoUbicacionTexto, posXLinea, canvas.height - (40 * escala));
+            ctx.fillText("MDW-GEO: 38.0000° S, 57.5500° W [MARDELWOOD]", posXLinea, canvas.height - (40 * escala));
 
             // 3. AUSPICIO INFERIOR CENTRADO
             ctx.save();
@@ -285,6 +309,8 @@
             enlace.href = canvas.toDataURL('image/jpeg', 0.98);
             enlace.click();
         }
+
+        window.onload = cargarVidrieraAutomatica;
     </script>
 
 </body>

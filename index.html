@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Posta 1001 — Vidriera Clandestina Mardelwood (MDW)</title>
-    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Special+Elite&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
     <style>
         body {
             background-color: #0b131a;
@@ -100,96 +100,61 @@
 
     <header>
         <div class="tag">POSTA DEL MILISEGUNDO — MDW 1001</div>
-        <h1>VIDRIERA DE ESTAMPIYA! DE TIEMPO</h1>
-        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Explorá el archivo visual y descargá cada pieza con certificación atómica en vivo.</p>
+        <h1>VIDRIERA DE ESTAMPIYA DE TIEMPO</h1>
+        <p style="font-size: 0.85rem; color: #67e8f9; margin-top: 5px;">Explorá el archivo visual y descargá cada pieza con certificación atómica.</p>
     </header>
 
-    <main id="vidriera-container" class="vidriera-grid">
-        <div style="grid-column: 1 / -1; text-align: center; color: #00ffff; padding: 40px;">
-            Buscando piezas en la carpeta de GitHub...
+    <main class="vidriera-grid">
+
+        <!-- TARJETA 1: Reemplazá 'imagen1.jpg' por el nombre real de tu archivo en el repo -->
+        <div class="tarjeta-estampiya">
+            <div>
+                <div class="estampiya-frame">
+                    <img src="imagen1.jpg" alt="Aviso Mardelwood 1" crossorigin="anonymous" class="img-estampa-ref">
+                </div>
+                <div class="info-estampa">
+                    <h3>Aviso Clandestino 01</h3>
+                    <div><strong>Posta:</strong> 1001 (MDW)</div>
+                    <div><strong>Hash Base:</strong> MDW-X991-1890</div>
+                </div>
+            </div>
+            <button class="btn-descarga-mdw" onclick="descargarEstampiyaDeVidriera(this)">
+                📥 VER Y DESCARGAR CON MS
+            </button>
         </div>
+
+        <!-- TARJETA 2: Duplicá este bloque hacia abajo si querés agregar más imágenes -->
+        <div class="tarjeta-estampiya">
+            <div>
+                <div class="estampiya-frame">
+                    <img src="imagen2.jpg" alt="Aviso Mardelwood 2" crossorigin="anonymous" class="img-estampa-ref">
+                </div>
+                <div class="info-estampa">
+                    <h3>Aviso Clandestino 02</h3>
+                    <div><strong>Posta:</strong> 1001 (MDW)</div>
+                    <div><strong>Hash Base:</strong> MDW-B442-1890</div>
+                </div>
+            </div>
+            <button class="btn-descarga-mdw" onclick="descargarEstampiyaDeVidriera(this)">
+                📥 VER Y DESCARGAR CON MS
+            </button>
+        </div>
+
     </main>
 
     <canvas id="canvas-sello" style="display:none;"></canvas>
 
     <script>
-        function formatearTitulo(nombreArchivo) {
-            let sinExtension = nombreArchivo.substring(0, nombreArchivo.lastIndexOf('.')) || nombreArchivo;
-            let limpio = sinExtension.replace(/[-_]/g, ' ');
-            return limpio.charAt(0).toUpperCase() + limpio.slice(1);
-        }
-
-        async function cargarVidrieraAutomatica() {
-            const contenedor = document.getElementById('vidriera-container');
-            
-            try {
-                // Detección automática universal para cualquier repositorio de GitHub Pages
-                const hostname = window.location.hostname; // ej: misterkong69-del.github.io
-                const pathArray = window.location.pathname.split('/').filter(Boolean);
-                
-                let userOrOrg = hostname.split('.')[0];
-                let repoName = pathArray.length > 0 ? pathArray[0] : hostname;
-
-                // Si estás probando localmente en tu compu (localhost o archivo), usamos un respaldo directo
-                let apiUrl;
-                if (hostname.includes('github.io')) {
-                    apiUrl = `https://api.github.com/repos/${userOrOrg}/${repoName}/contents/`;
-                } else {
-                    // Respaldo por si abrís el archivo directo en local
-                    apiUrl = `https://api.github.com/repos/misterkong69-del/misterkong69-del.github.io/contents/`;
+        let geoUbicacionTexto = "MDW-GEO: 38.0000° S, 57.5500° W [MARDELWOOD]";
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    geoUbicacionTexto = `GEO: ${position.coords.latitude.toFixed(4)}° S, ${position.coords.longitude.toFixed(4)}° W [MDW]`;
+                },
+                (error) => {
+                    console.log("Usando coordenadas base de Mardelwood.");
                 }
-
-                apiUrl += `?t=${new Date().getTime()}`;
-
-                const respuesta = await fetch(apiUrl);
-                if (!respuesta.ok) throw new Error("No se pudo conectar con el repositorio.");
-                
-                const archivos = await respuesta.json();
-                
-                const imagenes = archivos.filter(item => {
-                    if (item.type !== 'file') return false;
-                    const ext = item.name.split('.').pop().toLowerCase();
-                    return ['png', 'jpg', 'jpeg', 'webp'].includes(ext);
-                });
-
-                if (imagenes.length === 0) {
-                    contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #ff5555; padding: 40px;">⚠️ No se encontraron imágenes en este repositorio.</div>';
-                    return;
-                }
-
-                contenedor.innerHTML = "";
-
-                imagenes.forEach((imgData) => {
-                    const tituloLindo = formatearTitulo(imgData.name);
-                    const hashAleatorio = "MDW-" + Math.random().toString(36).substring(2, 8).toUpperCase() + "-1890";
-                    
-                    const tarjeta = document.createElement('div');
-                    tarjeta.className = 'tarjeta-estampiya';
-                    
-                    const urlImagenFresca = `${imgData.name}?v=${Math.random()}`;
-
-                    tarjeta.innerHTML = `
-                        <div>
-                            <div class="estampiya-frame">
-                                <img src="${urlImagenFresca}" alt="${tituloLindo}" crossorigin="anonymous" class="img-estampa-ref">
-                            </div>
-                            <div class="info-estampa">
-                                <h3>${tituloLindo}</h3>
-                                <div><strong>Posta:</strong> 1001 (MDW)</div>
-                                <div><strong>Hash Base:</strong> ${hashAleatorio}</div>
-                            </div>
-                        </div>
-                        <button class="btn-descarga-mdw" onclick="descargarEstampiyaDeVidriera(this)">
-                            📥 VER Y DESCARGAR CON MS
-                        </button>
-                    `;
-                    contenedor.appendChild(tarjeta);
-                });
-
-            } catch (error) {
-                console.error(error);
-                contenedor.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #ff5555; padding: 40px;">⚠️ Error al cargar las imágenes automáticamente. Verificá la conexión o que el repositorio sea público.</div>';
-            }
+            );
         }
 
         function descargarEstampiyaDeVidriera(btn) {
@@ -204,44 +169,122 @@
             try {
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
             } catch (e) {
-                alert("Error de seguridad al procesar la imagen.");
+                alert("Error de seguridad (CORS). Comprobá que la imagen esté en el mismo repositorio.");
                 return;
             }
 
             const ahora = new Date();
-            const fStr = ahora.toLocaleDateString('es-AR');
+            const anioFijo = "1890"; 
+            const fStr = `${String(ahora.getDate()).padStart(2, '0')}/${String(ahora.getMonth() + 1).padStart(2, '0')}/${anioFijo}`;
             const hStr = String(ahora.getHours()).padStart(2, '0');
             const mStr = String(ahora.getMinutes()).padStart(2, '0');
             const sStr = String(ahora.getSeconds()).padStart(2, '0');
             const msStr = String(ahora.getMilliseconds()).padStart(3, '0');
-            const timestampCompleto = `${fStr} ${hStr}:${mStr}:${sStr}.${msStr}`;
-            const hashSello = "MDW-" + Math.random().toString(36).substring(2, 10).toUpperCase() + "-1001";
+            const hashSello = "HASH-ID: MDW-" + Math.random().toString(36).substring(2, 10).toUpperCase() + "-1001";
 
-            ctx.fillStyle = "#00ffff"; 
-            ctx.font = "bold 32px 'Courier New', monospace";
-            
-            ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
-            ctx.shadowOffsetX = 6;
-            ctx.shadowOffsetY = 6;
-            ctx.shadowBlur = 12;
+            const escala = canvas.width / 1200;
 
-            const posX = canvas.width - 780;
-            const posY = canvas.height - 240;
+            ctx.save();
 
-            ctx.fillText(`FECHA: ${timestampCompleto}`, posX, posY);
-            ctx.fillText(`HASH-Q: ${hashSello}`, posX, posY + 52);
+            // 1. LÍNEA DE TIEMPO GIGANTE ARRIBA
+            ctx.shadowColor = "rgba(0, 255, 255, 0.9)";
+            ctx.shadowBlur = 15 * escala;
+
+            const posXLinea = 50 * escala;
+            const posYLinea = 100 * escala;
+
+            ctx.fillStyle = "#00ffff";
+            ctx.font = `900 ${Math.round(54 * escala)}px 'Orbitron', sans-serif`;
+            ctx.fillText(`${hStr}:${mStr}:${sStr}.${msStr}`, posXLinea, posYLinea);
 
             ctx.fillStyle = "#ffffff";
-            ctx.font = "bold 26px 'Courier New', monospace";
-            ctx.fillText("ESTAMPIYA! DE TIEMPO — POSTA 1001", posX, posY + 110);
+            ctx.font = `700 ${Math.round(26 * escala)}px 'Orbitron', sans-serif`;
+            ctx.fillText(`FECHA: ${fStr} — MARDELWOOD (MDW)`, posXLinea, posYLinea + 40 * escala);
+
+            // 2. HASH ID Y GEOLOCALIZACIÓN ABAJO A LA IZQUIERDA
+            ctx.shadowColor = "rgba(0, 255, 255, 0.7)";
+            ctx.shadowBlur = 8 * escala;
+
+            ctx.fillStyle = "#00ffff";
+            ctx.font = `bold ${Math.round(24 * escala)}px 'Courier New', monospace`;
+            ctx.fillText(hashSello, posXLinea, canvas.height - (75 * escala));
+            
+            ctx.fillStyle = "#a5f3fc";
+            ctx.font = `bold ${Math.round(20 * escala)}px 'Courier New', monospace`;
+            ctx.fillText(geoUbicacionTexto, posXLinea, canvas.height - (40 * escala));
+
+            // 3. AUSPICIO INFERIOR CENTRADO
+            ctx.save();
+            ctx.shadowColor = "rgba(0, 255, 255, 0.9)";
+            ctx.shadowBlur = 12 * escala;
+            ctx.fillStyle = "#00ffff";
+            ctx.font = `bold ${Math.round(22 * escala)}px 'Courier New', monospace`;
+            ctx.textAlign = "center";
+            ctx.fillText("Auspicia: MARDELWOOD — Estampado Oficial 1890", canvas.width / 2, canvas.height - (15 * escala));
+            ctx.restore();
+
+            // 4. SELLO REDONDO APARTE
+            const radioSello = 130 * escala;
+            const centroX = canvas.width - radioSello - (60 * escala);
+            const centroY = canvas.height - radioSello - (90 * escala);
+
+            ctx.save();
+            ctx.translate(centroX, centroY);
+
+            ctx.shadowColor = "rgba(0, 255, 255, 0.6)";
+            ctx.shadowBlur = 12 * escala;
+
+            ctx.beginPath();
+            ctx.arc(0, 0, radioSello, 0, Math.PI * 2);
+            ctx.fillStyle = "rgba(7, 12, 16, 0.55)";
+            ctx.fill();
+
+            ctx.strokeStyle = "#00ffff";
+            ctx.lineWidth = 5 * escala;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(0, 0, radioSello - (10 * escala), 0, Math.PI * 2);
+            ctx.lineWidth = 1.5 * escala;
+            ctx.stroke();
+
+            ctx.fillStyle = "#00ffff";
+            ctx.font = `bold ${Math.round(13 * escala)}px 'Courier New', monospace`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+
+            const textoSuperior = "★ MARDELWOOD 1890 ★";
+            const radioTexto = radioSello - (22 * escala);
+            for (let i = 0; i < textoSuperior.length; i++) {
+                ctx.save();
+                let angulo = (i * 0.12) - (textoSuperior.length * 0.058);
+                ctx.rotate(angulo);
+                ctx.translate(0, -radioTexto);
+                ctx.rotate(Math.PI / 2);
+                ctx.fillText(textoSuperior[i], 0, 0);
+                ctx.restore();
+            }
+
+            ctx.fillStyle = "#ffffff";
+            ctx.font = `bold ${Math.round(11 * escala)}px 'Orbitron', sans-serif`;
+            ctx.fillText("CERTIFICADO", 0, -15 * escala);
+
+            ctx.fillStyle = "#00ffff";
+            ctx.font = `bold ${Math.round(14 * escala)}px 'Orbitron', sans-serif`;
+            ctx.fillText("ATÓMICO", 0, 8 * escala);
+
+            ctx.font = `${Math.round(10 * escala)}px 'Courier New', monospace`;
+            ctx.fillStyle = "#a5f3fc";
+            ctx.fillText("MDW-1890", 0, 32 * escala);
+
+            ctx.restore();
+            ctx.restore();
 
             const enlace = document.createElement('a');
-            enlace.download = `ESTAMPIYA_TIEMPO_${ahora.getTime()}.jpg`;
+            enlace.download = `ESTAMPIYA_MARDELWOOD_1890.jpg`;
             enlace.href = canvas.toDataURL('image/jpeg', 0.98);
             enlace.click();
         }
-
-        window.onload = cargarVidrieraAutomatica;
     </script>
 
 </body>
